@@ -79,13 +79,13 @@ function App() {
           <div className="flex flex-col gap-6">
             {/* Big Search Bar on Top */}
             <div className="relative w-full group">
-              <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-400 group-focus-within:text-zinc-900 transition-colors" />
+              <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-400 group-focus-within:text-zinc-900 transition-colors select-none" />
               <input 
                 type="text"
                 placeholder="Search keywords, claims, or viral news..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full h-14 pl-14 pr-6 rounded-2xl bg-zinc-50 border border-zinc-200 text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-4 focus:ring-zinc-900/5 focus:bg-white focus:border-zinc-900 transition-all text-lg shadow-sm"
+                className="w-full h-10 pl-14 pr-6 rounded-md bg-zinc-50 border border-zinc-200 text-zinc-900 placeholder:text-zinc-400 focus:outline-none transition-all text-sm"
               />
             </div>
             
@@ -101,10 +101,10 @@ function App() {
                       key={p.id}
                       onClick={() => setPlatform(p.id)}
                       className={cn(
-                        "flex items-center gap-2 px-4 py-2 rounded-lg text-[11px] font-bold tracking-widest uppercase transition-all duration-200 whitespace-nowrap border",
+                        "flex items-center gap-2 px-4 py-2 rounded-sm text-[11px] font-bold tracking-widest uppercase transition-all duration-200 whitespace-nowrap border",
                         active 
-                          ? "bg-zinc-100 text-zinc-900 border-zinc-900 shadow-sm" 
-                          : "bg-white text-zinc-500 border-zinc-200 hover:border-zinc-900 hover:text-zinc-900"
+                          ? "text-zinc-900 bg-zinc-100" 
+                          : "text-zinc-500 border-zinc-200 hover:border-zinc-900 hover:text-zinc-900"
                       )}
                     >
                       <Icon className="w-3.5 h-3.5" />
@@ -118,10 +118,9 @@ function App() {
         </div>
       </div>
 
-      <div className="max-w-6xl mx-auto py-12 px-2 sm:px-6 relative">
-        <div className="flex gap-8 md:gap-12">
-          {/* Main Column */}
-          <div className="flex-1 space-y-16">
+      <div className="max-w-4xl mx-auto py-12 px-4 sm:px-6 relative">
+          {/* Main Column - Identical width to Search Bar */}
+          <div className="space-y-16">
             {isLoading ? (
               <div className="flex flex-col items-center justify-center py-20 gap-4">
                 <Loader2 className="w-10 h-10 animate-spin text-zinc-300" />
@@ -130,9 +129,9 @@ function App() {
             ) : allNews.length > 0 ? (
               <>
                 {allNews.map((news: any) => (
-                  <div key={news.slug} className="flex gap-8 md:gap-12 relative">
-                    {/* Left Date Column */}
-                    <div className="hidden lg:flex w-32 flex-col items-end pt-4">
+                  <div key={news.slug} className="relative">
+                    {/* Left Date Column - Absolute Positioned Outside */}
+                    <div className="hidden xl:flex absolute -left-48 w-32 flex-col items-end pt-4">
                       <div className="sticky top-28">
                         <div className="text-base font-black text-zinc-900 uppercase tracking-widest text-right">
                           {new Date(news.publishedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
@@ -140,7 +139,7 @@ function App() {
                       </div>
                     </div>
 
-                    <div className="flex-1 relative">
+                    <div className="relative">
                       <NewsCard news={news} />
                     </div>
                   </div>
@@ -161,8 +160,8 @@ function App() {
               </>
             ) : (
               <div className="py-20 text-center space-y-4">
-                <div className="inline-flex p-4 rounded-full bg-zinc-100 mb-4">
-                  <Search className="w-8 h-8 text-zinc-300" />
+                <div className="inline-flex p-4 rounded-full bg-zinc-100 mb-4 select-none">
+                  <Search className="w-8 h-8 text-zinc-300 select-none" />
                 </div>
                 <h3 className="text-xl font-bold text-zinc-900">No results found</h3>
                 <p className="text-zinc-500 max-w-xs mx-auto text-sm">
@@ -172,8 +171,8 @@ function App() {
             )}
           </div>
 
-          {/* Timeline Column */}
-          <div className="hidden lg:block w-32 relative">
+          {/* Timeline Column - Aligned on the Right (Absolute) */}
+          <div className="hidden xl:block absolute -right-24 top-12 h-full">
             <div className="sticky top-24 h-[calc(100vh-120px)] flex flex-col items-center">
               <div className="absolute top-0 bottom-0 w-[2px] bg-red-100" />
               <div className="relative flex flex-col gap-8 py-4">
@@ -189,7 +188,6 @@ function App() {
               </div>
             </div>
           </div>
-        </div>
       </div>
     </div>
   )
