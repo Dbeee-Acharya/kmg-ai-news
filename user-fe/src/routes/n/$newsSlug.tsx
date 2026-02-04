@@ -44,7 +44,7 @@ function NewsDetailPage() {
   if (isLoading) {
     return (
       <div className="min-h-screen">
-        <Header bgColor="bg-white" />
+        <Header />
         <div className="flex items-center justify-center min-h-[60vh]">
           <Loader2 className="w-8 h-8 animate-spin text-zinc-400" />
         </div>
@@ -55,7 +55,7 @@ function NewsDetailPage() {
   if (error || !news) {
     return (
       <div className="min-h-screen">
-        <Header bgColor="bg-white" />
+        <Header />
         <div className="max-w-4xl mx-auto py-12 px-4 text-center">
           <h1 className="text-2xl font-bold text-zinc-900 mb-4 font-mukta">News Not Found</h1>
           <Link to="/" className="text-blue-600 hover:underline inline-flex items-center gap-2 font-mukta">
@@ -72,7 +72,7 @@ function NewsDetailPage() {
 
   return (
     <div className="min-h-screen bg-white">
-      <Header bgColor="bg-white" />
+      <Header />
       <article className="max-w-4xl mx-auto py-8 md:py-16 px-4 sm:px-6 font-mukta">
       <div className="mb-10">
         <Link to="/">

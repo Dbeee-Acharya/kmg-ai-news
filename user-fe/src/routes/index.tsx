@@ -71,7 +71,7 @@ function App() {
 
   return (
     <div className="min-h-screen bg-zinc-50/30 font-mukta">
-      <Header bgColor="#a51719" />
+      <Header />
 
       {/* Subtle Search & Filter Bar - Below Hero */}
       <div className="sticky top-16 z-40 bg-white/90 backdrop-blur-xl border-b border-zinc-100 shadow-sm">
@@ -164,14 +164,14 @@ function App() {
           {/* Timeline Column */}
           <div className="hidden lg:block w-32 relative">
             <div className="sticky top-24 h-[calc(100vh-120px)] flex flex-col items-center">
-              <div className="absolute top-0 bottom-0 w-[2px] bg-zinc-100" />
+              <div className="absolute top-0 bottom-0 w-[2px] bg-red-100" />
               <div className="relative flex flex-col gap-8 py-4">
-                {allNews.slice(0, 10).map((_: any, i: number) => (
+                {allNews.map((_: any, i: number) => (
                   <div 
                     key={i}
                     className={cn(
                       "w-3 h-3 rounded-full border-2 transition-all duration-500 relative z-10",
-                      "bg-zinc-900 border-zinc-900 shadow-[0_0_10px_rgba(0,0,0,0.1)] scale-110"
+                      "bg-[#a51719] border-[#a51719] shadow-[0_0_10px_rgba(165,23,25,0.2)] scale-110"
                     )}
                   />
                 ))}
