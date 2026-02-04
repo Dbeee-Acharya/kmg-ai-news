@@ -12,6 +12,10 @@ import { Loader2, ArrowLeft, ExternalLink, Calendar, Maximize2, Tag } from 'luci
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
 
+import { MediaRenderer } from '@/components/MediaRenderer';
+
+import Header from '../../components/Header';
+
 export const Route = createFileRoute('/n/$newsSlug')({
   component: NewsDetailPage,
 });
@@ -25,7 +29,7 @@ function NewsDetailPage() {
   const handleImageLoad = (url: string, e: React.SyntheticEvent<HTMLImageElement>) => {
     const { naturalWidth, naturalHeight } = e.currentTarget;
     if (naturalHeight > naturalWidth) {
-      setIsVertical(prev => ({ ...prev, [url]: true }));
+      setIsVertical((prev: Record<string, boolean>) => ({ ...prev, [url]: true }));
     }
   };
 
@@ -39,19 +43,25 @@ function NewsDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <Loader2 className="w-8 h-8 animate-spin text-zinc-400" />
+      <div className="min-h-screen">
+        <Header bgColor="bg-white" />
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <Loader2 className="w-8 h-8 animate-spin text-zinc-400" />
+        </div>
       </div>
     );
   }
 
   if (error || !news) {
     return (
-      <div className="max-w-4xl mx-auto py-12 px-4 text-center">
-        <h1 className="text-2xl font-bold text-zinc-900 mb-4 font-mukta">News Not Found</h1>
-        <Link to="/" className="text-blue-600 hover:underline inline-flex items-center gap-2 font-mukta">
-          <ArrowLeft className="w-4 h-4" /> Back to Home
-        </Link>
+      <div className="min-h-screen">
+        <Header bgColor="bg-white" />
+        <div className="max-w-4xl mx-auto py-12 px-4 text-center">
+          <h1 className="text-2xl font-bold text-zinc-900 mb-4 font-mukta">News Not Found</h1>
+          <Link to="/" className="text-blue-600 hover:underline inline-flex items-center gap-2 font-mukta">
+            <ArrowLeft className="w-4 h-4" /> Back to Home
+          </Link>
+        </div>
       </div>
     );
   }
@@ -61,7 +71,9 @@ function NewsDetailPage() {
   const galleryMedia = sortedMedia.slice(1);
 
   return (
-    <article className="max-w-4xl mx-auto py-8 md:py-16 px-4 sm:px-6 font-mukta">
+    <div className="min-h-screen bg-white">
+      <Header bgColor="bg-white" />
+      <article className="max-w-4xl mx-auto py-8 md:py-16 px-4 sm:px-6 font-mukta">
       <div className="mb-10">
         <Link to="/">
           <Button variant="ghost" className="text-zinc-400 hover:text-zinc-900 -ml-4 gap-2 font-bold tracking-widest text-xs uppercase group">
@@ -107,11 +119,11 @@ function NewsDetailPage() {
               <DialogTrigger asChild>
                 <div className="group relative rounded-2xl overflow-hidden border border-zinc-100 shadow-md cursor-zoom-in">
                   <AspectRatio ratio={isVertical[featuredMedia.url] ? 9 / 16 : 5 / 3}>
-                    <img 
-                      src={featuredMedia.url} 
+                    <MediaRenderer 
+                      media={featuredMedia}
                       alt={news.title}
                       onLoad={(e) => handleImageLoad(featuredMedia.url, e)}
-                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                      className="transition-transform duration-700 group-hover:scale-105"
                     />
                   </AspectRatio>
                   <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300 flex items-center justify-center">
@@ -124,7 +136,7 @@ function NewsDetailPage() {
               <DialogContent className="max-w-[90vw] max-h-[90vh] sm:max-w-5xl p-0 border-none bg-black/95 flex items-center justify-center rounded-xl overflow-hidden shadow-2xl">
                 <DialogTitle className="sr-only">Image Preview</DialogTitle>
                 <DialogDescription className="sr-only">Full size view of the news media</DialogDescription>
-                <img src={featuredMedia.url} alt={news.title} className="max-w-full max-h-full object-contain" />
+                <MediaRenderer media={featuredMedia} alt={news.title} className="max-w-full max-h-full object-contain" />
               </DialogContent>
             </Dialog>
 
@@ -136,11 +148,11 @@ function NewsDetailPage() {
                     <DialogTrigger asChild>
                       <div className="group relative rounded-xl overflow-hidden border border-zinc-100 shadow-sm cursor-zoom-in bg-zinc-50">
                         <AspectRatio ratio={isVertical[item.url] ? 9 / 16 : 5 / 3}>
-                          <img 
-                            src={item.url} 
+                          <MediaRenderer 
+                            media={item}
                             alt={`${news.title} - ${i + 2}`}
                             onLoad={(e) => handleImageLoad(item.url, e)}
-                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                            className="transition-transform duration-500 group-hover:scale-110"
                           />
                         </AspectRatio>
                         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
@@ -151,7 +163,7 @@ function NewsDetailPage() {
                     <DialogContent className="max-w-[90vw] max-h-[90vh] sm:max-w-5xl p-0 border-none bg-black/95 flex items-center justify-center rounded-xl overflow-hidden shadow-2xl">
                       <DialogTitle className="sr-only">Image Preview</DialogTitle>
                       <DialogDescription className="sr-only">Full size view of gallery image</DialogDescription>
-                      <img src={item.url} alt={news.title} className="max-w-full max-h-full object-contain" />
+                      <MediaRenderer media={item} alt={news.title} className="max-w-full max-h-full object-contain" />
                     </DialogContent>
                   </Dialog>
                 ))}
@@ -224,6 +236,7 @@ function NewsDetailPage() {
           </div>
         )}
       </div>
-    </article>
+      </article>
+    </div>
   );
 }
