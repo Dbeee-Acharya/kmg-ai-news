@@ -29,7 +29,6 @@ export default function Header({ bgColor = '#a51719' }: HeaderProps) {
       : cn(bgColor, 'backdrop-blur-md shadow-sm border-zinc-100');
 
   const textColor = isDarkBg ? 'text-white' : 'text-zinc-900';
-  const hoverColor = isDarkBg ? 'hover:text-white/90' : 'hover:text-blue-600';
 
   return (
     <header 
@@ -45,19 +44,6 @@ export default function Header({ bgColor = '#a51719' }: HeaderProps) {
             eKantipur <span className="opacity-70 font-normal">| Fact-checking</span>
           </span>
         </Link>
-        
-        <nav className="hidden lg:flex w-32 items-center justify-center">
-          <Link 
-            to="/" 
-            className={cn(
-              "text-sm font-bold transition-colors uppercase tracking-widest",
-              textColor,
-              hoverColor
-            )}
-          >
-            Timeline
-          </Link>
-        </nav>
       </div>
     </header>
   );

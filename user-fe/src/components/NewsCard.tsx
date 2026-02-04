@@ -2,13 +2,13 @@ import React, { useState } from 'react';
 import { Card, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
-import { ExternalLink, Share2, Check } from 'lucide-react';
+import { ExternalLink, Share2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Link } from '@tanstack/react-router';
 import { Button } from '@/components/ui/button';
-import { toast } from 'sonner';
 
 import { MediaRenderer } from './MediaRenderer';
+import ShareModal from './ShareModal';
 
 interface NewsCardProps {
   news: {
@@ -39,7 +39,6 @@ interface NewsCardProps {
 
 const NewsCard: React.FC<NewsCardProps> = ({ news, className }) => {
   const [isVertical, setIsVertical] = useState<Record<string, boolean>>({});
-  const [isCopied, setIsCopied] = useState(false);
 
   const handleImageLoad = (url: string, e: React.SyntheticEvent<HTMLImageElement>) => {
     const { naturalWidth, naturalHeight } = e.currentTarget;
@@ -48,16 +47,6 @@ const NewsCard: React.FC<NewsCardProps> = ({ news, className }) => {
     }
   };
 
-  const handleShare = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    const url = `${window.location.origin}/n/${news.slug}`;
-    navigator.clipboard.writeText(url).then(() => {
-      setIsCopied(true);
-      toast.success('Link copied to clipboard!');
-      setTimeout(() => setIsCopied(false), 2000);
-    });
-  };
 
   const formatDate = (dateStr: string) => {
     return new Date(dateStr).toLocaleDateString('en-US', {
@@ -74,14 +63,21 @@ const NewsCard: React.FC<NewsCardProps> = ({ news, className }) => {
   return (
     <Card className={cn("group overflow-hidden border-zinc-200 bg-white shadow-sm hover:shadow-md transition-shadow duration-300 rounded-xl relative", className)}>
       {/* Share Button */}
-      <Button 
-        variant="ghost" 
-        size="icon" 
-        onClick={handleShare}
-        className="absolute top-4 right-4 z-20 rounded-full bg-white/80 backdrop-blur-md shadow-sm transition-all hover:bg-zinc-900 hover:text-white border border-zinc-100"
-      >
-        {isCopied ? <Check className="w-4 h-4" /> : <Share2 className="w-4 h-4" />}
-      </Button>
+      <div className="absolute top-4 right-4 z-20">
+        <ShareModal 
+          title={news.title}
+          url={`${window.location.origin}/n/${news.slug}`}
+          trigger={
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="rounded-full bg-white/80 backdrop-blur-md shadow-sm transition-all hover:bg-zinc-900 hover:text-white border border-zinc-100"
+            >
+              <Share2 className="w-4 h-4" />
+            </Button>
+          }
+        />
+      </div>
 
       <div className="flex flex-col md:flex-row">
         {/* Left Column / Top on Mobile: Info & Media */}

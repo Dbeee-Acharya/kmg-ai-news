@@ -9,10 +9,10 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog';
 import { Loader2, ArrowLeft, ExternalLink, Calendar, Maximize2, Tag } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { useState } from 'react';
 
 import { MediaRenderer } from '@/components/MediaRenderer';
+import ShareModal from '@/components/ShareModal';
 
 import Header from '../../components/Header';
 
@@ -74,33 +74,33 @@ function NewsDetailPage() {
     <div className="min-h-screen bg-white">
       <Header />
       <article className="max-w-4xl mx-auto py-8 md:py-16 px-4 sm:px-6 font-mukta">
-      <div className="mb-10">
-        <Link to="/">
-          <Button variant="ghost" className="text-zinc-400 hover:text-zinc-900 -ml-4 gap-2 font-bold tracking-widest text-xs uppercase group">
-            <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" /> 
-            BACK TO ALL NEWS
-          </Button>
-        </Link>
-      </div>
 
       <div className="space-y-10">
         {/* Header Section */}
         <div className="space-y-6">
           <div className="space-y-4">
             {news.eventDateNp && (
-              <div className="flex items-center gap-2 text-blue-600 font-bold tracking-tight text-lg">
+              <div className="flex items-center gap-2 text-black-600 font-bold tracking-tight text-lg">
                 <Calendar className="w-5 h-5" />
                 <span>{news.eventDateNp}</span>
                 {news.eventDateEn && <span className="text-zinc-300 font-medium text-sm ml-1">/ {formatDate(news.eventDateEn)}</span>}
               </div>
             )}
             
-            <h1 className="text-4xl md:text-6xl font-black tracking-tight text-zinc-900 leading-[1.15]">
-              {news.title}
-            </h1>
+            <div className="flex justify-between items-start gap-4">
+              <h1 className="text-4xl md:text-6xl font-black tracking-tight text-zinc-900 leading-[1.15] flex-1">
+                {news.title}
+              </h1>
+              <div className="pt-2">
+                <ShareModal 
+                  title={news.title}
+                  url={window.location.href}
+                />
+              </div>
+            </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-x-6 gap-y-3 pt-6 border-t border-zinc-100">
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-3 pt-0">
             <div className="flex items-center gap-2 text-zinc-500 text-xs font-bold uppercase tracking-widest">
               <Tag className="w-3.5 h-3.5" />
               <span>{news.tags.join(' • ') || 'Global News'}</span>
@@ -173,7 +173,7 @@ function NewsDetailPage() {
         )}
 
         {/* Content Body */}
-        <div className="py-8 border-b border-zinc-100">
+        <div className="py-6 border-b border-zinc-300">
           <div 
             dangerouslySetInnerHTML={{ __html: news.content }} 
             className="prose prose-zinc prose-lg max-w-none text-black selection:bg-blue-100"
@@ -188,8 +188,8 @@ function NewsDetailPage() {
 
         {/* Sources Section */}
         {news.links && news.links.length > 0 && (
-          <div className="pt-12">
-            <h3 className="text-[10px] font-bold tracking-[0.4em] text-zinc-700 uppercase mb-8">Related Sources</h3>
+          <div className="pt-1">
+            <h3 className="text-[20px] font-bold text-zinc-700 uppercase mb-8">Related Sources</h3>
             <div className="space-y-3">
               {news.links.map((link: any, i: number) => (
                 <a 
@@ -197,7 +197,7 @@ function NewsDetailPage() {
                   href={link.url} 
                   target="_blank" 
                   rel="noopener noreferrer"
-                  className="flex items-center group gap-4 p-5 rounded-2xl border border-zinc-100 bg-white hover:border-zinc-300 hover:shadow-lg transition-all"
+                  className="flex items-center group gap-4 p-5 rounded-2xl border border-zinc-300 bg-white hover:border-zinc-300 hover:shadow-lg transition-all"
                 >
                   <div className="p-3 rounded-xl bg-zinc-50 group-hover:bg-zinc-900 group-hover:text-white transition-colors">
                     <ExternalLink className="w-5 h-5" />

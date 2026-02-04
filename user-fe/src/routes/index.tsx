@@ -101,10 +101,10 @@ function App() {
                       key={p.id}
                       onClick={() => setPlatform(p.id)}
                       className={cn(
-                        "flex items-center gap-2.5 px-5 py-2.5 rounded-xl text-[12px] font-bold tracking-widest uppercase transition-all duration-200 whitespace-nowrap border",
+                        "flex items-center gap-2 px-4 py-2 rounded-lg text-[11px] font-bold tracking-widest uppercase transition-all duration-200 whitespace-nowrap border",
                         active 
-                          ? "bg-zinc-900 text-white border-zinc-900 shadow-md scale-105" 
-                          : "bg-white text-zinc-900 border-zinc-200 hover:border-zinc-900 hover:text-zinc-900"
+                          ? "bg-zinc-100 text-zinc-900 border-zinc-900 shadow-sm" 
+                          : "bg-white text-zinc-500 border-zinc-200 hover:border-zinc-900 hover:text-zinc-900"
                       )}
                     >
                       <Icon className="w-3.5 h-3.5" />
@@ -118,7 +118,7 @@ function App() {
         </div>
       </div>
 
-      <div className="max-w-6xl mx-auto py-12 px-4 sm:px-6 relative">
+      <div className="max-w-6xl mx-auto py-12 px-2 sm:px-6 relative">
         <div className="flex gap-8 md:gap-12">
           {/* Main Column */}
           <div className="flex-1 space-y-16">
