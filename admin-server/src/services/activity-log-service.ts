@@ -13,13 +13,13 @@ export class ActivityLogService {
   }) {
     try {
       const newLog: NewActivityLog = {
-        userId: data.userId === 'super-admin-uuid' ? null : data.userId, // Map superadmin placeholder to null in DB
+        userId: data.userId === 'super-admin-uuid' ? null : (data.userId || null), 
         action: data.action,
-        entityType: data.entityType,
-        entityId: data.entityId,
-        metadata: data.metadata,
-        ip: data.ip,
-        userAgent: data.userAgent,
+        entityType: data.entityType || null,
+        entityId: data.entityId || null,
+        metadata: data.metadata || null,
+        ip: data.ip?.trim() || null,
+        userAgent: data.userAgent?.trim() || null,
       };
 
       await db.insert(activityLogs).values(newLog);
