@@ -32,6 +32,8 @@ interface NewsCardProps {
   className?: string;
 }
 
+import { Link } from '@tanstack/react-router';
+
 const NewsCard: React.FC<NewsCardProps> = ({ news, className }) => {
   const formatDate = (dateStr: string) => {
     return new Date(dateStr).toLocaleDateString('en-US', {
@@ -57,9 +59,11 @@ const NewsCard: React.FC<NewsCardProps> = ({ news, className }) => {
           </div>
 
           <CardHeader className="p-0 space-y-3">
-            <CardTitle className="text-2xl md:text-3xl font-extrabold tracking-tight text-zinc-900 leading-tight text-left">
-              {news.title}
-            </CardTitle>
+            <Link to="/n/$newsSlug" params={{ newsSlug: news.slug }}>
+              <CardTitle className="text-2xl md:text-3xl font-extrabold tracking-tight text-zinc-900 leading-tight text-left hover:text-zinc-600 transition-colors cursor-pointer">
+                {news.title}
+              </CardTitle>
+            </Link>
             
             {news.eventDateNp && (
               <div className="inline-flex">
@@ -86,10 +90,10 @@ const NewsCard: React.FC<NewsCardProps> = ({ news, className }) => {
         {/* Right Column / Middle on Mobile: Description & Links */}
         <div className="flex-1 p-6 md:p-8 md:border-l border-zinc-100 flex flex-col justify-between">
           <div className="space-y-6">
-            <div className="text-zinc-700 leading-relaxed text-sm md:text-base font-light text-left">
+            <div className="text-black leading-relaxed text-sm md:text-base font-light text-left">
               <div 
                 dangerouslySetInnerHTML={{ __html: news.content }} 
-                className="prose prose-zinc max-w-none text-zinc-700 font-sans line-clamp-[12]"
+                className="prose prose-zinc max-w-none text-black font-sans line-clamp-[12]"
               />
             </div>
 
