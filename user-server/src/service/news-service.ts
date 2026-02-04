@@ -8,7 +8,7 @@ import {
   tags, 
   newsPlatforms 
 } from '../db/schema.js';
-import { eq, and, desc, asc, lte, gte, ilike, or, sql } from 'drizzle-orm';
+import { eq, and, desc, asc, lte, gte, ilike, or, sql, inArray } from 'drizzle-orm';
 import { cacheService } from './cache-service.js';
 
 export class NewsService {
@@ -42,6 +42,7 @@ export class NewsService {
     }
 
     const query = db.select({
+      id: news.id,
       title: news.title,
       slug: news.slug,
       content: news.content,
@@ -61,9 +62,11 @@ export class NewsService {
       (query as any).innerJoin(newsPlatforms, eq(news.id, newsPlatforms.newsId));
     }
 
-    const results = await (query as any)
+    const newsItems = await (query as any)
       .where(and(...filters))
       .orderBy(desc(news.publishedAt));
+
+    const results = await this.attachRelations(newsItems);
 
     await cacheService.set(cacheKey, results);
     return results;
@@ -77,10 +80,14 @@ export class NewsService {
     const cached = await cacheService.get(cacheKey);
     if (cached) return cached;
 
-    const results = await db.select({
+    const newsItems = await db.select({
+      id: news.id,
       title: news.title,
       slug: news.slug,
+      content: news.content,
       publishedAt: news.publishedAt,
+      eventDateEn: news.eventDateEn,
+      eventDateNp: news.eventDateNp,
       reporter: {
         name: users.name,
         portfolioLink: users.portfolioLink,
@@ -100,8 +107,61 @@ export class NewsService {
     .orderBy(desc(news.publishedAt))
     .limit(20);
 
+    const results = await this.attachRelations(newsItems);
+
     await cacheService.set(cacheKey, results);
     return results;
+  }
+
+  /**
+   * Helper to attach media, links, and tags to news items in bulk
+   */
+  private static async attachRelations(newsItems: any[]) {
+    if (newsItems.length === 0) return [];
+
+    const newsIds = newsItems.map(item => item.id);
+
+    // 1. Get all Media for these news items
+    const allMedia = await db.select({
+      newsId: newsMedia.newsId,
+      type: newsMedia.type,
+      url: newsMedia.url,
+      sortOrder: newsMedia.sortOrder
+    })
+    .from(newsMedia)
+    .where(inArray(newsMedia.newsId, newsIds))
+    .orderBy(asc(newsMedia.sortOrder));
+
+    // 2. Get all Links for these news items
+    const allLinks = await db.select({
+      newsId: newsLinks.newsId,
+      label: newsLinks.label,
+      url: newsLinks.url,
+      sortOrder: newsLinks.sortOrder
+    })
+    .from(newsLinks)
+    .where(inArray(newsLinks.newsId, newsIds))
+    .orderBy(asc(newsLinks.sortOrder));
+
+    // 3. Get all Tags for these news items
+    const allTags = await db.select({
+      newsId: newsTags.newsId,
+      name: tags.name,
+    })
+    .from(newsTags)
+    .innerJoin(tags, eq(newsTags.tagId, tags.id))
+    .where(inArray(newsTags.newsId, newsIds));
+
+    // Map relations back to news items
+    return newsItems.map(item => {
+      const { id, ...rest } = item;
+      return {
+        ...rest,
+        media: allMedia.filter(m => m.newsId === id).map(({ newsId, ...m }) => m),
+        links: allLinks.filter(l => l.newsId === id).map(({ newsId, ...l }) => l),
+        tags: allTags.filter(t => t.newsId === id).map(t => t.name),
+      };
+    });
   }
 
   /**
