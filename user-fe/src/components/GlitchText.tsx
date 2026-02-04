@@ -18,44 +18,41 @@ export const GlitchText = () => {
   const text = isNepali ? 'तथ्य जाँच' : 'Fact Check';
 
   return (
-    <div className="relative inline-block group cursor-default">
-      {/* Main Container with subtle hover scale */}
-      <h1 className="text-6xl md:text-8xl font-black tracking-tighter text-white uppercase relative transition-transform duration-300 transform group-hover:scale-105">
+    <div className="relative inline-block cursor-default">
+      {/* Main Container */}
+      <h1 className="text-6xl md:text-8xl font-black tracking-tighter text-white uppercase relative">
         
-        {/* Base Layer */}
+        {/* Base Layer - Static White */}
         <span className="relative z-10">
           {text}
         </span>
 
-        {/* RGB Split Layers - Active during high intensity or subtle on hover */}
-        <span className="absolute inset-0 text-red-500/80 z-0 select-none pointer-events-none opacity-0 group-hover:opacity-100 animate-glitch-r">
-          {text}
-        </span>
-        <span className="absolute inset-0 text-cyan-400/80 z-0 select-none pointer-events-none opacity-0 group-hover:opacity-100 animate-glitch-b">
-          {text}
-        </span>
-
-        {/* High Intensity Glitch Slices - Triggered by interval */}
+        {/* Glitch Effects - ONLY active during the burst */}
         {isGlitching && (
-          <>
-            <span className="absolute inset-0 text-white z-20 select-none pointer-events-none animate-glitch-heavy opacity-100">
+          <div className="absolute inset-0 z-20 overflow-visible">
+            {/* White jitter/slice layer */}
+            <span className="absolute inset-0 text-white select-none pointer-events-none animate-glitch-heavy opacity-100">
               {text}
             </span>
-            <span className="absolute inset-0 text-white z-20 select-none pointer-events-none animate-glitch-heavy opacity-70 translate-x-3 translate-y-1">
+            
+            {/* Colored glitch artifacts */}
+            <span className="absolute inset-0 text-fuchsia-500 select-none pointer-events-none animate-glitch-purple opacity-90 translate-x-4">
               {text}
             </span>
-            <div className="absolute inset-0 bg-white/20 z-30 animate-pulse pointer-events-none mix-blend-overlay" />
-          </>
-        )}
+            <span className="absolute inset-0 text-rose-500 select-none pointer-events-none animate-glitch-blush opacity-90 -translate-x-4">
+              {text}
+            </span>
 
-        {/* Subtle static jitter for that 'live' digital feel */}
-        <span className="absolute inset-0 text-white/10 z-0 select-none pointer-events-none translate-x-[1px] -translate-y-[1px]">
-          {text}
-        </span>
+            {/* High-frequency Diagonal Buzz */}
+            <span className="absolute inset-0 text-white/50 select-none pointer-events-none animate-glitch-diagonal translate-x-1 translate-y-1">
+              {text}
+            </span>
+
+            {/* Digital flash/slice overlay */}
+            <div className="absolute inset-0 bg-white/10 z-30 animate-pulse pointer-events-none" />
+          </div>
+        )}
       </h1>
-      
-      {/* Background Glow */}
-      <div className="absolute -inset-8 bg-blue-500/5 blur-3xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
     </div>
   );
 };

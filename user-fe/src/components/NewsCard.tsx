@@ -151,7 +151,7 @@ const NewsCard: React.FC<NewsCardProps> = ({ news, className }) => {
             <div className="text-black leading-relaxed text-sm md:text-base font-normal text-left">
               <div 
                 dangerouslySetInnerHTML={{ __html: news.content }} 
-                className="prose prose-zinc max-w-none text-black font-sans line-clamp-[12]"
+                className="prose prose-zinc max-w-none text-black font-sans line-clamp-[12] text-[16px]"
               />
             </div>
 

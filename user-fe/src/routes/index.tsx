@@ -87,28 +87,30 @@ function App() {
 
         <div className="relative z-10 container max-w-4xl mx-auto px-4 text-center">
           <GlitchText />
-          <p className="mt-6 text-zinc-400 font-medium tracking-[0.3em] uppercase text-xs opacity-60">Verified Reporting & Fact Checking</p>
+          <p className="mt-6 text-zinc-400 font-medium tracking-[0.3em] uppercase text-xs opacity-60"></p>
         </div>
       </section>
 
       {/* Subtle Search & Filter Bar - Below Hero */}
-      <div className="sticky top-16 z-40 bg-white/80 backdrop-blur-xl border-b border-zinc-100 shadow-xs">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4 space-y-4">
-          <div className="flex flex-col md:flex-row items-center gap-4">
-            <div className="relative flex-1 w-full">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+      <div className="sticky top-16 z-40 bg-white/90 backdrop-blur-xl border-b border-zinc-100 shadow-sm">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 space-y-6">
+          <div className="flex flex-col gap-6">
+            {/* Big Search Bar on Top */}
+            <div className="relative w-full group">
+              <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-400 group-focus-within:text-zinc-900 transition-colors" />
               <input 
                 type="text"
-                placeholder="Search keywords or claims..."
+                placeholder="Search keywords, claims, or viral news..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full h-11 pl-11 pr-4 rounded-xl bg-zinc-50 border border-zinc-200 text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-900/5 transition-all text-sm"
+                className="w-full h-14 pl-14 pr-6 rounded-2xl bg-zinc-50 border border-zinc-200 text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-4 focus:ring-zinc-900/5 focus:bg-white focus:border-zinc-900 transition-all text-lg shadow-sm"
               />
             </div>
             
-            {/* Scrollable Platforms Filter */}
-            <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1 w-full md:w-auto">
-              <div className="flex items-center gap-2 pr-4">
+            {/* Scrollable Platforms Filter Below */}
+            <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1 w-full">
+              <div className="flex items-center gap-3 pr-4">
+                <span className="text-[10px] font-bold text-zinc-700 uppercase tracking-widest mr-2 whitespace-nowrap">Filter by</span>
                 {PLATFORMS.map((p) => {
                   const Icon = p.icon;
                   const active = platform === p.id;
@@ -117,13 +119,13 @@ function App() {
                       key={p.id}
                       onClick={() => setPlatform(p.id)}
                       className={cn(
-                        "flex items-center gap-2 px-4 py-2 rounded-lg text-[10px] font-bold tracking-widest uppercase transition-all duration-200 whitespace-nowrap border",
+                        "flex items-center gap-2.5 px-5 py-2.5 rounded-xl text-[12px] font-bold tracking-widest uppercase transition-all duration-200 whitespace-nowrap border",
                         active 
-                          ? "bg-zinc-900 text-white border-zinc-900 shadow-sm" 
-                          : "bg-white text-zinc-500 border-zinc-200 hover:border-zinc-900 hover:text-zinc-900"
+                          ? "bg-zinc-900 text-white border-zinc-900 shadow-md scale-105" 
+                          : "bg-white text-zinc-900 border-zinc-200 hover:border-zinc-900 hover:text-zinc-900"
                       )}
                     >
-                      <Icon className="w-3 h-3" />
+                      <Icon className="w-3.5 h-3.5" />
                       {p.label}
                     </button>
                   )
