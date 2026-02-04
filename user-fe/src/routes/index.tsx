@@ -130,8 +130,19 @@ function App() {
             ) : allNews.length > 0 ? (
               <>
                 {allNews.map((news: any) => (
-                  <div key={news.slug} className="relative">
-                    <NewsCard news={news} />
+                  <div key={news.slug} className="flex gap-8 md:gap-12 relative">
+                    {/* Left Date Column */}
+                    <div className="hidden lg:flex w-32 flex-col items-end pt-4">
+                      <div className="sticky top-28">
+                        <div className="text-base font-black text-zinc-900 uppercase tracking-widest text-right">
+                          {new Date(news.publishedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex-1 relative">
+                      <NewsCard news={news} />
+                    </div>
                   </div>
                 ))}
 

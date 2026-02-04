@@ -29,7 +29,6 @@ export default function Header({ bgColor = '#a51719' }: HeaderProps) {
       : cn(bgColor, 'backdrop-blur-md shadow-sm border-zinc-100');
 
   const textColor = isDarkBg ? 'text-white' : 'text-zinc-900';
-  const secondaryTextColor = isDarkBg ? 'text-white/70 hover:text-white' : 'text-zinc-400 hover:text-zinc-900';
   const hoverColor = isDarkBg ? 'hover:text-white/90' : 'hover:text-blue-600';
 
   return (
