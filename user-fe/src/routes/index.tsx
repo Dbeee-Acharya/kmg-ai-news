@@ -4,6 +4,7 @@ import NewsCard from '../components/NewsCard'
 import { useEffect } from 'react'
 import { useInView } from 'react-intersection-observer'
 import { Loader2 } from 'lucide-react'
+import { cn } from '../lib/utils'
 
 export const Route = createFileRoute('/')({
   component: App,
@@ -51,52 +52,50 @@ function App() {
   })
 
   return (
-    <div className="max-w-6xl mx-auto py-12 px-4 sm:px-6">
-      <div className="space-y-16">
-        {groupedNews.map((group, groupIdx) => (
-          <div key={groupIdx} className="relative">
-            {group.items.map((news, idx) => (
-              <div key={news.slug} className="group relative flex gap-8 md:gap-16 mb-12 last:mb-0">
-                {/* Left Side: Date Label (Only show for first item in group) */}
-                <div className="w-16 md:w-24 flex-shrink-0 pt-2">
-                  {idx === 0 && (
-                    <div className="sticky top-24">
-                      <h2 className="text-3xl md:text-4xl font-black text-blue-600 mb-2">
-                        {group.month}
-                      </h2>
-                      <div className="w-4 h-4 rounded-full bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.5)]" />
-                    </div>
-                  )}
-                </div>
+    <div className="max-w-6xl mx-auto py-12 px-4 sm:px-6 relative">
+      <div className="flex gap-8 md:gap-12">
+        {/* Left/Main Column: News Cards */}
+        <div className="flex-1 space-y-16">
+          {allNews.map((news) => (
+            <div key={news.slug} className="relative">
+              <NewsCard news={news} />
+            </div>
+          ))}
 
-                {/* Right Side: News Card & Timeline Line */}
-                <div className="flex-1 min-w-0">
-                  <div className="relative">
-                    {/* The horizontal line connector from dot to card (optional, based on design) */}
-                    {/* <div className="absolute -left-12 top-6 w-12 h-[1px] bg-zinc-100 hidden md:block" /> */}
-                    <NewsCard news={news} />
-                  </div>
-                </div>
-              </div>
-            ))}
-            
-            {/* Visual separator line between month groups */}
-            {groupIdx < groupedNews.length - 1 && (
-              <div className="ml-24 md:ml-40 border-t border-zinc-100 my-16" />
+          {/* Infinite Scroll Trigger */}
+          <div ref={ref} className="h-20 flex items-center justify-center mt-8">
+            {isFetchingNextPage ? (
+              <Loader2 className="w-6 h-6 animate-spin text-zinc-300" />
+            ) : hasNextPage ? (
+              <div className="text-zinc-400 text-sm font-medium">Scrolling for more...</div>
+            ) : (
+              <div className="text-zinc-300 text-sm italic">You've reached the end of the timeline</div>
             )}
           </div>
-        ))}
-      </div>
+        </div>
 
-      {/* Infinite Scroll Trigger */}
-      <div ref={ref} className="h-20 flex items-center justify-center mt-8">
-        {isFetchingNextPage ? (
-          <Loader2 className="w-6 h-6 animate-spin text-zinc-300" />
-        ) : hasNextPage ? (
-          <div className="text-zinc-400 text-sm font-medium">Scrolling for more...</div>
-        ) : (
-          <div className="text-zinc-300 text-sm italic">You've reached the end of the timeline</div>
-        )}
+        {/* Right Column: Git-branch style Timeline */}
+        <div className="hidden lg:block w-32 relative">
+          <div className="sticky top-24 h-[calc(100vh-120px)] flex flex-col items-center">
+            {/* The vertical line */}
+            <div className="absolute top-0 bottom-0 w-[2px] bg-zinc-100" />
+            
+            {/* Dynamic dots based on news count / progress */}
+            <div className="relative flex flex-col gap-8 py-4">
+              {allNews.map((_, i) => (
+                <div 
+                  key={i}
+                  className={cn(
+                    "w-3 h-3 rounded-full border-2 transition-all duration-500 relative z-10",
+                    i < (data?.pages.flat().length || 0) // Basic implementation: all items fetched have dots
+                      ? "bg-zinc-900 border-zinc-900 shadow-[0_0_10px_rgba(0,0,0,0.1)]" 
+                      : "bg-white border-zinc-200"
+                  )}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   )

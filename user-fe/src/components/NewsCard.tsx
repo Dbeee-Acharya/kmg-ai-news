@@ -2,7 +2,7 @@ import React from 'react';
 import { Card, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
-import { ExternalLink, User } from 'lucide-react';
+import { ExternalLink } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface NewsCardProps {
@@ -121,9 +121,6 @@ const NewsCard: React.FC<NewsCardProps> = ({ news, className }) => {
           {news.reporter && (
             <div className="mt-8 pt-6 border-t border-zinc-50 flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-full bg-zinc-100 flex items-center justify-center border border-zinc-200">
-                  <User className="w-4 h-4 text-zinc-400" />
-                </div>
                 <div>
                   <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Reported by</p>
                   <p className="text-xs font-semibold text-zinc-900">{news.reporter.name}</p>
@@ -132,8 +129,7 @@ const NewsCard: React.FC<NewsCardProps> = ({ news, className }) => {
               {news.reporter.portfolioLink && (
                 <a 
                   href={news.reporter.portfolioLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                  target=""
                   className="text-zinc-400 hover:text-zinc-900 transition-colors"
                   aria-label="Reporter Portfolio"
                 >
