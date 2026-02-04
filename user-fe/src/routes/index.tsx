@@ -6,7 +6,6 @@ import { useInView } from 'react-intersection-observer'
 import { Loader2, Search, Globe, Facebook, Twitter, Instagram, Youtube, MessageCircle, Mail, Tv, Radio, Newspaper, Hash, MoreHorizontal } from 'lucide-react'
 import { cn } from '../lib/utils'
 import Header from '../components/Header'
-import { GlitchText } from '../components/GlitchText'
 
 export const Route = createFileRoute('/')({
   component: App,
@@ -72,24 +71,7 @@ function App() {
 
   return (
     <div className="min-h-screen bg-zinc-50/30 font-mukta">
-      <Header bgColor="transparent" />
-      
-      {/* Hero Section - Just the Title */}
-      <section className="relative h-[80vh] w-full flex flex-col items-center justify-center overflow-hidden bg-zinc-950">
-        <div className="absolute inset-0 z-0">
-          <img 
-            src="/Users/dbeee/.gemini/antigravity/brain/29d5139f-8053-4534-878e-64ef3b44bb87/news_hero_background_1770200079733.png"
-            className="w-full h-full object-cover opacity-40 grayscale scale-105"
-            alt="Hero Background"
-          />
-          <div className="absolute inset-0 bg-gradient-to-b from-zinc-950/60 via-zinc-950/40 to-zinc-50/20" />
-        </div>
-
-        <div className="relative z-10 container max-w-4xl mx-auto px-4 text-center">
-          <GlitchText />
-          <p className="mt-6 text-zinc-400 font-medium tracking-[0.3em] uppercase text-xs opacity-60"></p>
-        </div>
-      </section>
+      <Header bgColor="#a51719" />
 
       {/* Subtle Search & Filter Bar - Below Hero */}
       <div className="sticky top-16 z-40 bg-white/90 backdrop-blur-xl border-b border-zinc-100 shadow-sm">
