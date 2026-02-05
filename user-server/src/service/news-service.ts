@@ -4,11 +4,9 @@ import {
   users, 
   newsMedia, 
   newsLinks, 
-  newsTags, 
-  tags, 
   newsPlatforms 
 } from '../db/schema.js';
-import { eq, and, desc, asc, lte, gte, ilike, or, sql, inArray } from 'drizzle-orm';
+import { eq, and, desc, asc, lte, gte, sql, inArray, arrayContains } from 'drizzle-orm';
 import { cacheService } from './cache-service.js';
 
 export class NewsService {
@@ -46,6 +44,8 @@ export class NewsService {
       title: news.title,
       slug: news.slug,
       content: news.content,
+      tags: news.tags,
+      metadata: news.metadata,
       publishedAt: news.publishedAt,
       eventDateEn: news.eventDateEn,
       eventDateNp: news.eventDateNp,
@@ -73,18 +73,23 @@ export class NewsService {
   }
 
   /**
-   * Search news by title or content
+   * Search news by title, content, tags, or metadata using full-text search
    */
   static async searchNews(queryText: string) {
     const cacheKey = cacheService.generateKey('news_search', { q: queryText });
     const cached = await cacheService.get(cacheKey);
     if (cached) return cached;
 
+    // Use full-text search on title, content, metadata + array containment for tags
+    const searchTerms = queryText.trim().split(/\s+/).join(' & ');
+    
     const newsItems = await db.select({
       id: news.id,
       title: news.title,
       slug: news.slug,
       content: news.content,
+      tags: news.tags,
+      metadata: news.metadata,
       publishedAt: news.publishedAt,
       eventDateEn: news.eventDateEn,
       eventDateNp: news.eventDateNp,
@@ -98,10 +103,11 @@ export class NewsService {
     .where(
       and(
         eq(news.isPublished, true),
-        or(
-          ilike(news.title, `%${queryText}%`),
-          ilike(news.content, `%${queryText}%`)
-        )
+        sql`(
+          to_tsvector('simple', coalesce(${news.title}, '') || ' ' || coalesce(${news.content}, '') || ' ' || coalesce(${news.metadata}, ''))
+          @@ to_tsquery('simple', ${searchTerms})
+          OR ${news.tags} @> ARRAY[${queryText.toLowerCase().trim()}]::text[]
+        )`
       )
     )
     .orderBy(desc(news.publishedAt))
@@ -114,7 +120,7 @@ export class NewsService {
   }
 
   /**
-   * Helper to attach media, links, and tags to news items in bulk
+   * Helper to attach media and links to news items in bulk (tags are now on news record)
    */
   private static async attachRelations(newsItems: any[]) {
     if (newsItems.length === 0) return [];
@@ -143,23 +149,14 @@ export class NewsService {
     .where(inArray(newsLinks.newsId, newsIds))
     .orderBy(asc(newsLinks.sortOrder));
 
-    // 3. Get all Tags for these news items
-    const allTags = await db.select({
-      newsId: newsTags.newsId,
-      name: tags.name,
-    })
-    .from(newsTags)
-    .innerJoin(tags, eq(newsTags.tagId, tags.id))
-    .where(inArray(newsTags.newsId, newsIds));
-
-    // Map relations back to news items
+    // Map relations back to news items (tags are already on the record)
     return newsItems.map(item => {
       const { id, ...rest } = item;
       return {
         ...rest,
         media: allMedia.filter(m => m.newsId === id).map(({ newsId, ...m }) => m),
         links: allLinks.filter(l => l.newsId === id).map(({ newsId, ...l }) => l),
-        tags: allTags.filter(t => t.newsId === id).map(t => t.name),
+        tags: item.tags || [],
       };
     });
   }
@@ -172,13 +169,15 @@ export class NewsService {
     const cached = await cacheService.get(cacheKey);
     if (cached) return cached;
 
-    // 1. Get main news record
+    // 1. Get main news record (tags are now directly on the news record)
     const [record] = await db.select({
       id: news.id, // We need ID to fetch relations but won't return it in final object
       title: news.title,
       content: news.content,
       slug: news.slug,
       keywords: news.keywords,
+      tags: news.tags,
+      metadata: news.metadata,
       publishedAt: news.publishedAt,
       eventDateEn: news.eventDateEn,
       eventDateNp: news.eventDateNp,
@@ -216,27 +215,20 @@ export class NewsService {
     .where(eq(newsLinks.newsId, newsId))
     .orderBy(asc(newsLinks.sortOrder));
 
-    // 4. Get Tags
-    const newsTagsList = await db.select({
-      name: tags.name,
-    })
-    .from(newsTags)
-    .innerJoin(tags, eq(newsTags.tagId, tags.id))
-    .where(eq(newsTags.newsId, newsId));
-
     // Assemble final response (excluding internal ID)
     const finalResponse = {
       title: record.title,
       content: record.content,
       slug: record.slug,
       keywords: record.keywords,
+      tags: record.tags || [],
+      metadata: record.metadata || '',
       publishedAt: record.publishedAt,
       eventDateEn: record.eventDateEn,
       eventDateNp: record.eventDateNp,
       reporter: record.reporter,
       media,
       links,
-      tags: newsTagsList.map(t => t.name),
     };
 
     await cacheService.set(cacheKey, finalResponse);

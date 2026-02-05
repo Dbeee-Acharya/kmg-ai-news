@@ -67,19 +67,6 @@ export const users = pgTable(
 );
 
 // ============================================================================
-// TAGS
-// ============================================================================
-
-export const tags = pgTable(
-  "tags",
-  {
-    id: serial("id").primaryKey(),
-    name: text("name").notNull(), // stored normalized/lowercased
-  },
-  (table) => [uniqueIndex("tags_name_idx").on(table.name)],
-);
-
-// ============================================================================
 // NEWS
 // ============================================================================
 
@@ -90,7 +77,9 @@ export const news = pgTable(
     title: text("title").notNull(),
     content: text("content").notNull(),
     slug: text("slug").notNull(),
-    keywords: text("keywords").array(), // optional; tags are still normalized
+    keywords: text("keywords").array(), // optional; kept for backward compat
+    tags: text("tags").array(), // per-news tags stored as array
+    metadata: text("metadata"), // per-news metadata stored as text for FTS
     isPublished: boolean("is_published").notNull().default(false),
     publishedAt: timestamp("published_at", { withTimezone: true }),
     eventDateEn: date("event_date_en"), // English date
@@ -114,10 +103,12 @@ export const news = pgTable(
     ),
     index("news_event_date_idx").on(table.eventDateEn),
     index("news_reporter_idx").on(table.reporterId),
-    // Full-text search GIN index on title + content
+    // GIN index on tags array for efficient array containment queries (e.g., tags @> ARRAY['tag'])
+    index("news_tags_gin_idx").using("gin", table.tags),
+    // Full-text search GIN index on title + content + metadata
     index("news_fts_idx").using(
       "gin",
-      sql`to_tsvector('simple', coalesce(${table.title}, '') || ' ' || coalesce(${table.content}, ''))`,
+      sql`to_tsvector('simple', coalesce(${table.title}, '') || ' ' || coalesce(${table.content}, '') || ' ' || coalesce(${table.metadata}, ''))`,
     ),
   ],
 );
@@ -142,27 +133,7 @@ export const newsPlatforms = pgTable(
   ],
 );
 
-// ============================================================================
-// NEWS TAGS (M:N Join Table)
-// ============================================================================
 
-export const newsTags = pgTable(
-  "news_tags",
-  {
-    newsId: uuid("news_id")
-      .notNull()
-      .references(() => news.id, { onDelete: "cascade" }),
-    tagId: integer("tag_id")
-      .notNull()
-      .references(() => tags.id, { onDelete: "cascade" }),
-  },
-  (table) => [
-    // Composite primary key
-    uniqueIndex("news_tags_pk").on(table.newsId, table.tagId),
-    // Index for tag-based search
-    index("news_tags_tag_idx").on(table.tagId),
-  ],
-);
 
 // ============================================================================
 // NEWS MEDIA (Ordered)
@@ -220,17 +191,11 @@ export const newsLinks = pgTable(
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
 
-export type Tag = typeof tags.$inferSelect;
-export type NewTag = typeof tags.$inferInsert;
-
 export type News = typeof news.$inferSelect;
 export type NewNews = typeof news.$inferInsert;
 
 export type NewsPlatform = typeof newsPlatforms.$inferSelect;
 export type NewNewsPlatform = typeof newsPlatforms.$inferInsert;
-
-export type NewsTag = typeof newsTags.$inferSelect;
-export type NewNewsTag = typeof newsTags.$inferInsert;
 
 export type NewsMedia = typeof newsMedia.$inferSelect;
 export type NewNewsMedia = typeof newsMedia.$inferInsert;

@@ -178,7 +178,7 @@ function NewsDetailPage() {
             dangerouslySetInnerHTML={{ __html: news.content }} 
             className="prose prose-zinc prose-lg max-w-none text-black selection:bg-blue-100"
             style={{ 
-              fontSize: '22px', 
+              fontSize: '20px', 
               fontWeight: 500, 
               lineHeight: '1.6',
               fontFamily: "'Mukta', sans-serif" 

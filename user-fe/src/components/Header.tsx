@@ -41,7 +41,7 @@ export default function Header({ bgColor = '#a51719' }: HeaderProps) {
       <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
         <Link to="/" className="flex items-center gap-3 group">
           <span className={cn("text-xl font-black tracking-tight transition-colors", textColor)}>
-            eKantipur <span className="opacity-70 font-normal">| Fact-checking</span>
+            Kantipur <span className="opacity-70 font-normal">| Fact Checker</span>
           </span>
         </Link>
       </div>
