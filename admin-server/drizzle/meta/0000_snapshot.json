@@ -1,5 +1,5 @@
 {
-  "id": "59ade8ab-e2bc-4f58-87c8-9dfa99760883",
+  "id": "163eb930-346e-49b9-8775-9b4fd8ebcbe9",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -164,6 +164,18 @@
           "primaryKey": false,
           "notNull": false
         },
+        "tags": {
+          "name": "tags",
+          "type": "text[]",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "metadata": {
+          "name": "metadata",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
         "is_published": {
           "name": "is_published",
           "type": "boolean",
@@ -277,11 +289,26 @@
           "method": "btree",
           "with": {}
         },
+        "news_tags_gin_idx": {
+          "name": "news_tags_gin_idx",
+          "columns": [
+            {
+              "expression": "tags",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "gin",
+          "with": {}
+        },
         "news_fts_idx": {
           "name": "news_fts_idx",
           "columns": [
             {
-              "expression": "to_tsvector('simple', coalesce(\"title\", '') || ' ' || coalesce(\"content\", ''))",
+              "expression": "to_tsvector('simple', coalesce(\"title\", '') || ' ' || coalesce(\"content\", '') || ' ' || coalesce(\"metadata\", ''))",
               "asc": true,
               "isExpression": true,
               "nulls": "last"
@@ -595,136 +622,6 @@
           "onUpdate": "no action"
         }
       },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.news_tags": {
-      "name": "news_tags",
-      "schema": "",
-      "columns": {
-        "news_id": {
-          "name": "news_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "tag_id": {
-          "name": "tag_id",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        }
-      },
-      "indexes": {
-        "news_tags_pk": {
-          "name": "news_tags_pk",
-          "columns": [
-            {
-              "expression": "news_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "tag_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": true,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "news_tags_tag_idx": {
-          "name": "news_tags_tag_idx",
-          "columns": [
-            {
-              "expression": "tag_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "news_tags_news_id_news_id_fk": {
-          "name": "news_tags_news_id_news_id_fk",
-          "tableFrom": "news_tags",
-          "tableTo": "news",
-          "columnsFrom": [
-            "news_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "news_tags_tag_id_tags_id_fk": {
-          "name": "news_tags_tag_id_tags_id_fk",
-          "tableFrom": "news_tags",
-          "tableTo": "tags",
-          "columnsFrom": [
-            "tag_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.tags": {
-      "name": "tags",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "serial",
-          "primaryKey": true,
-          "notNull": true
-        },
-        "name": {
-          "name": "name",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        }
-      },
-      "indexes": {
-        "tags_name_idx": {
-          "name": "tags_name_idx",
-          "columns": [
-            {
-              "expression": "name",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": true,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},

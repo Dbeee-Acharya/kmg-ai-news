@@ -18,6 +18,8 @@ CREATE TABLE "news" (
 	"content" text NOT NULL,
 	"slug" text NOT NULL,
 	"keywords" text[],
+	"tags" text[],
+	"metadata" text,
 	"is_published" boolean DEFAULT false NOT NULL,
 	"published_at" timestamp with time zone,
 	"event_date_en" date,
@@ -49,16 +51,6 @@ CREATE TABLE "news_platforms" (
 	"platform" "platform" NOT NULL
 );
 --> statement-breakpoint
-CREATE TABLE "news_tags" (
-	"news_id" uuid NOT NULL,
-	"tag_id" integer NOT NULL
-);
---> statement-breakpoint
-CREATE TABLE "tags" (
-	"id" serial PRIMARY KEY NOT NULL,
-	"name" text NOT NULL
-);
---> statement-breakpoint
 CREATE TABLE "users" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"email" text NOT NULL,
@@ -74,22 +66,18 @@ ALTER TABLE "news" ADD CONSTRAINT "news_reporter_id_users_id_fk" FOREIGN KEY ("r
 ALTER TABLE "news_links" ADD CONSTRAINT "news_links_news_id_news_id_fk" FOREIGN KEY ("news_id") REFERENCES "public"."news"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "news_media" ADD CONSTRAINT "news_media_news_id_news_id_fk" FOREIGN KEY ("news_id") REFERENCES "public"."news"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "news_platforms" ADD CONSTRAINT "news_platforms_news_id_news_id_fk" FOREIGN KEY ("news_id") REFERENCES "public"."news"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "news_tags" ADD CONSTRAINT "news_tags_news_id_news_id_fk" FOREIGN KEY ("news_id") REFERENCES "public"."news"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "news_tags" ADD CONSTRAINT "news_tags_tag_id_tags_id_fk" FOREIGN KEY ("tag_id") REFERENCES "public"."tags"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 CREATE INDEX "activity_logs_user_created_idx" ON "activity_logs" USING btree ("user_id","created_at" DESC);--> statement-breakpoint
 CREATE INDEX "activity_logs_entity_idx" ON "activity_logs" USING btree ("entity_type","entity_id");--> statement-breakpoint
 CREATE UNIQUE INDEX "news_slug_idx" ON "news" USING btree ("slug");--> statement-breakpoint
 CREATE INDEX "news_published_idx" ON "news" USING btree ("is_published","published_at" DESC);--> statement-breakpoint
 CREATE INDEX "news_event_date_idx" ON "news" USING btree ("event_date_en");--> statement-breakpoint
 CREATE INDEX "news_reporter_idx" ON "news" USING btree ("reporter_id");--> statement-breakpoint
-CREATE INDEX "news_fts_idx" ON "news" USING gin (to_tsvector('simple', coalesce("title", '') || ' ' || coalesce("content", '')));--> statement-breakpoint
+CREATE INDEX "news_tags_gin_idx" ON "news" USING gin ("tags");--> statement-breakpoint
+CREATE INDEX "news_fts_idx" ON "news" USING gin (to_tsvector('simple', coalesce("title", '') || ' ' || coalesce("content", '') || ' ' || coalesce("metadata", '')));--> statement-breakpoint
 CREATE UNIQUE INDEX "news_links_order_unique" ON "news_links" USING btree ("news_id","sort_order");--> statement-breakpoint
 CREATE INDEX "news_links_order_idx" ON "news_links" USING btree ("news_id","sort_order");--> statement-breakpoint
 CREATE UNIQUE INDEX "news_media_order_unique" ON "news_media" USING btree ("news_id","sort_order");--> statement-breakpoint
 CREATE INDEX "news_media_order_idx" ON "news_media" USING btree ("news_id","sort_order");--> statement-breakpoint
 CREATE UNIQUE INDEX "news_platforms_pk" ON "news_platforms" USING btree ("news_id","platform");--> statement-breakpoint
 CREATE INDEX "news_platforms_platform_idx" ON "news_platforms" USING btree ("platform");--> statement-breakpoint
-CREATE UNIQUE INDEX "news_tags_pk" ON "news_tags" USING btree ("news_id","tag_id");--> statement-breakpoint
-CREATE INDEX "news_tags_tag_idx" ON "news_tags" USING btree ("tag_id");--> statement-breakpoint
-CREATE UNIQUE INDEX "tags_name_idx" ON "tags" USING btree ("name");--> statement-breakpoint
 CREATE UNIQUE INDEX "users_email_idx" ON "users" USING btree ("email");

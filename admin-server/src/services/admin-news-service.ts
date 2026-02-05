@@ -1,5 +1,5 @@
 import { db } from '../db/index.js';
-import { news, newsPlatforms, newsMedia, newsLinks, newsTags, tags, type NewNews } from '../db/schema.js';
+import { news, newsPlatforms, newsMedia, newsLinks, type NewNews } from '../db/schema.js';
 import { eq, desc, and } from 'drizzle-orm';
 import { ActivityLogService } from './activity-log-service.js';
 
@@ -31,33 +31,32 @@ export class AdminNewsService {
     const platforms = await db.select().from(newsPlatforms).where(eq(newsPlatforms.newsId, id));
     const media = await db.select().from(newsMedia).where(eq(newsMedia.newsId, id)).orderBy(newsMedia.sortOrder);
     const links = await db.select().from(newsLinks).where(eq(newsLinks.newsId, id)).orderBy(newsLinks.sortOrder);
-    
-    // Join with tags table to get names
-    const newsTagsList = await db.select({
-      id: tags.id,
-      name: tags.name,
-    })
-    .from(newsTags)
-    .innerJoin(tags, eq(newsTags.tagId, tags.id))
-    .where(eq(newsTags.newsId, id));
 
     return {
       ...record,
       platforms: platforms.map(p => p.platform),
       media,
       links,
-      tags: newsTagsList.map(t => t.name),
+      tags: record.tags || [],
+      metadata: record.metadata || '',
     };
   }
 
   static async createNews(data: any, authUser: any, ip?: string, userAgent?: string) {
+    // Normalize tags to lowercase trimmed strings
+    const normalizedTags = data.tags && Array.isArray(data.tags)
+      ? data.tags.map((t: string) => t.toLowerCase().trim()).filter(Boolean)
+      : null;
+
     const result = await db.transaction(async (tx) => {
-      // 1. Insert news
+      // 1. Insert news with tags and metadata directly
       const [inserted] = await tx.insert(news).values({
         title: data.title,
         content: data.content,
         slug: data.slug,
         keywords: data.keywords,
+        tags: normalizedTags,
+        metadata: data.metadata || null,
         isPublished: data.isPublished,
         publishedAt: data.isPublished ? new Date() : null,
         eventDateEn: data.eventDateEn ? new Date(data.eventDateEn).toISOString().split('T')[0] : null,
@@ -78,24 +77,7 @@ export class AdminNewsService {
         }
       }
 
-      // 3. Handle Tags
-      if (data.tags && Array.isArray(data.tags)) {
-        for (const tagName of data.tags) {
-          const normalizedTag = tagName.toLowerCase().trim();
-          if (!normalizedTag) continue;
-
-          // Find or create tag
-          let [tag] = await tx.select().from(tags).where(eq(tags.name, normalizedTag)).limit(1);
-          if (!tag) {
-            [tag] = await tx.insert(tags).values({ name: normalizedTag }).returning();
-          }
-
-          await tx.insert(newsTags).values({
-            newsId,
-            tagId: tag.id,
-          }).onConflictDoNothing();
-        }
-      }
+      // Tags and metadata are now stored directly on the news record (handled above)
 
       // 4. Handle Media
       if (data.media && Array.isArray(data.media)) {
@@ -148,12 +130,19 @@ export class AdminNewsService {
         updateFilter.push(eq(news.reporterId, authUser.userId));
       }
 
+      // Normalize tags to lowercase trimmed strings
+      const normalizedTags = data.tags && Array.isArray(data.tags)
+        ? data.tags.map((t: string) => t.toLowerCase().trim()).filter(Boolean)
+        : undefined;
+
       const [record] = await tx.update(news)
         .set({
           title: data.title,
           content: data.content,
           slug: data.slug,
           keywords: data.keywords,
+          tags: normalizedTags,
+          metadata: data.metadata,
           isPublished: data.isPublished,
           publishedAt: data.isPublished ? (data.publishedAt ? new Date(data.publishedAt) : new Date()) : null,
           eventDateEn: data.eventDateEn ? new Date(data.eventDateEn).toISOString().split('T')[0] : null,
@@ -177,24 +166,7 @@ export class AdminNewsService {
         }
       }
 
-      // 3. Update Tags
-      if (data.tags && Array.isArray(data.tags)) {
-        await tx.delete(newsTags).where(eq(newsTags.newsId, id));
-        for (const tagName of data.tags) {
-          const normalizedTag = tagName.toLowerCase().trim();
-          if (!normalizedTag) continue;
-
-          let [tag] = await tx.select().from(tags).where(eq(tags.name, normalizedTag)).limit(1);
-          if (!tag) {
-            [tag] = await tx.insert(tags).values({ name: normalizedTag }).returning();
-          }
-
-          await tx.insert(newsTags).values({
-            newsId: id,
-            tagId: tag.id,
-          }).onConflictDoNothing();
-        }
-      }
+      // Tags and metadata are now stored directly on the news record (handled above)
 
       // 4. Update Media
       if (data.media && Array.isArray(data.media)) {
