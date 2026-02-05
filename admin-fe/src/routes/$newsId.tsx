@@ -101,6 +101,10 @@ function NewsDetailComponent() {
   }
 
   const addTag = () => {
+    if (formData.tags.length >= 3) {
+      toast.warning('Maximum 3 tags allowed')
+      return
+    }
     const tag = newTag.trim()
     if (tag && !formData.tags.includes(tag)) {
       setFormData((prev: any) => ({ ...prev, tags: [...prev.tags, tag] }))
@@ -116,6 +120,10 @@ function NewsDetailComponent() {
   }
 
   const addKeyword = () => {
+    if (formData.keywords.length >= 5) {
+      toast.warning('Maximum 5 keywords allowed')
+      return
+    }
     const kw = newKeyword.trim()
     if (kw && !formData.keywords.includes(kw)) {
       setFormData((prev: any) => ({ ...prev, keywords: [...prev.keywords, kw] }))
@@ -179,7 +187,12 @@ function NewsDetailComponent() {
 
   const updateLink = (index: number, field: string, value: string) => {
     const newLinks = [...formData.links]
-    newLinks[index] = { ...newLinks[index], [field]: value }
+    // Auto-prepend https:// if url field and missing protocol
+    let finalValue = value
+    if (field === 'url' && value && !value.startsWith('http://') && !value.startsWith('https://')) {
+      finalValue = `https://${value}`
+    }
+    newLinks[index] = { ...newLinks[index], [field]: finalValue }
     setFormData((prev: any) => ({ ...prev, links: newLinks }))
   }
 
@@ -308,7 +321,13 @@ function NewsDetailComponent() {
                     id="slug" 
                     value={formData.slug} 
                     onChange={(e) => {
-                      setFormData({...formData, slug: e.target.value})
+                      // Sanitize: lowercase, replace spaces/special chars with hyphen, only allow a-z and -
+                      const sanitized = e.target.value
+                        .toLowerCase()
+                        .replace(/\s+/g, '-')           // Replace spaces with hyphens
+                        .replace(/[^a-z0-9-]/g, '')    // Remove anything that's not a-z, 0-9, or hyphen
+                        .replace(/-+/g, '-')            // Collapse multiple hyphens
+                      setFormData({...formData, slug: sanitized})
                       setIsAutoSlug(false)
                     }} 
                     placeholder="url-slug-here"

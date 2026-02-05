@@ -106,7 +106,7 @@ export class NewsService {
         sql`(
           to_tsvector('simple', coalesce(${news.title}, '') || ' ' || coalesce(${news.content}, '') || ' ' || coalesce(${news.metadata}, ''))
           @@ to_tsquery('simple', ${searchTerms})
-          OR ${news.tags} @> ARRAY[${queryText.toLowerCase().trim()}]::text[]
+          OR array_to_string(${news.tags}, ' ') ILIKE ${'%' + queryText.toLowerCase().trim() + '%'}
         )`
       )
     )
