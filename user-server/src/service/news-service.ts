@@ -254,4 +254,25 @@ export class NewsService {
     await cacheService.set(cacheKey, finalResponse, CACHE_TTL);
     return finalResponse;
   }
+
+  /**
+   * Get all published news slugs and update times for sitemap
+   */
+  static async getSitemapData() {
+    const lastWeek = new Date();
+    lastWeek.setDate(lastWeek.getDate() - 7);
+
+    return await db.select({
+      slug: news.slug,
+      updatedAt: news.updatedAt,
+    })
+    .from(news)
+    .where(
+      and(
+        eq(news.isPublished, true),
+        gte(news.publishedAt, lastWeek)
+      )
+    )
+    .orderBy(desc(news.publishedAt));
+  }
 }

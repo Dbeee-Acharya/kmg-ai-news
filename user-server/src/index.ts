@@ -90,6 +90,42 @@ app.get('/n/:slug', async (c) => {
   }
 })
 
+// Dynamic Sitemap generation
+app.get('/sitemap.xml', async (c) => {
+  try {
+    const newsItems = await NewsService.getSitemapData();
+    const baseUrl = config.server.USER_FE_ORIGIN?.split(',')[0]?.trim() || 'https://factcheck.ekantipur.com';
+    
+    let xml = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>${baseUrl}/</loc>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+  </url>`;
+
+    for (const item of newsItems) {
+      const lastMod = item.updatedAt ? new Date(item.updatedAt).toISOString() : new Date().toISOString();
+      xml += `
+  <url>
+    <loc>${baseUrl}/n/${item.slug}</loc>
+    <lastmod>${lastMod}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>`;
+    }
+
+    xml += '\n</urlset>';
+
+    return c.text(xml, 200, {
+      'Content-Type': 'application/xml',
+    });
+  } catch (error) {
+    console.error('Sitemap Error:', error);
+    return c.text('Error generating sitemap', 500);
+  }
+});
+
 app.route('/api/news', newsRouter)
 
 // Fallback for all other frontend routes (SPA support)
