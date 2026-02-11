@@ -164,7 +164,7 @@ function App() {
                         </div>
 
                         {/* Right Timeline Dots - Sticky within this group */}
-                        <div className="hidden xl:block absolute top-0 h-full" style={{ right: '-102px' }}>
+                        <div className="hidden xl:block absolute top-0 h-full" style={{ right: '-105px' }}>
                           <div className="sticky top-[180px] py-4">
                             <div className="flex flex-col gap-4">
                               {newsItems.map((_: any, i: number) => (
