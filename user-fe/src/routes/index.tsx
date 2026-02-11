@@ -120,7 +120,10 @@ function App() {
 
       <div className="max-w-4xl mx-auto py-12 px-4 sm:px-6 relative">
           {/* Main Column - Identical width to Search Bar */}
-          <div className="space-y-0">
+          <div className="space-y-0 relative">
+            {/* Continuous Timeline Line - inside content area, right side */}
+            <div className="hidden xl:block absolute top-8 bottom-0 w-[2px] bg-red-100" style={{ right: '-100px' }} />
+            
             {isLoading ? (
               <div className="flex flex-col items-center justify-center py-20 gap-4">
                 <Loader2 className="w-10 h-10 animate-spin text-zinc-300" />
@@ -146,32 +149,30 @@ function App() {
 
                   return dateGroups.map(([dateKey, newsItems], groupIndex) => (
                     <div key={dateKey} className="relative">
-                      {/* Date Group Container - position relative for sticky context */}
-                      <div className="relative">
+                      {/* Date Group Container */}
+                      <div className="relative min-h-[200px]">
                         {/* Left Date Column - Sticky within this group */}
-                        <div className="hidden xl:flex absolute -left-48 w-32 flex-col items-end top-0 h-full">
-                          <div className="sticky top-28">
-                            <div className="text-base font-black text-zinc-900 uppercase tracking-widest text-right">
+                        <div className="hidden xl:block absolute -left-48 w-32 top-0 h-full">
+                          <div className="sticky top-[180px] text-right py-4">
+                            <div className="text-base font-black text-zinc-900 uppercase tracking-widest">
                               {new Date(newsItems[0].publishedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                             </div>
-                            <div className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider text-right mt-1">
+                            <div className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider mt-1">
                               {newsItems.length} {newsItems.length === 1 ? 'story' : 'stories'}
                             </div>
                           </div>
                         </div>
 
                         {/* Right Timeline Dots - Sticky within this group */}
-                        <div className="hidden xl:flex absolute -right-24 top-0 h-full flex-col items-center">
-                          <div className="sticky top-28">
-                            {/* Vertical line segment */}
-                            <div className="absolute left-1/2 -translate-x-1/2 top-0 h-full w-[2px] bg-red-100" />
-                            <div className="relative flex flex-col gap-3 py-2">
+                        <div className="hidden xl:block absolute top-0 h-full" style={{ right: '-102px' }}>
+                          <div className="sticky top-[180px] py-4">
+                            <div className="flex flex-col gap-4">
                               {newsItems.map((_: any, i: number) => (
                                 <div 
                                   key={i}
                                   className={cn(
-                                    "w-3 h-3 rounded-full border-2 transition-all duration-500 relative z-10",
-                                    "bg-[#a51719] border-[#a51719] shadow-[0_0_10px_rgba(165,23,25,0.2)]"
+                                    "w-3 h-3 rounded-full border-2 relative z-10",
+                                    "bg-[#a51719] border-[#a51719] shadow-[0_0_10px_rgba(165,23,25,0.3)]"
                                   )}
                                 />
                               ))}
