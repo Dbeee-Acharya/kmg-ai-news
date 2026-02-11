@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TagsRouteImport } from './routes/tags'
 import { Route as LogsRouteImport } from './routes/logs'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as NewsIdRouteImport } from './routes/$newsId'
@@ -16,6 +17,11 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as UserIndexRouteImport } from './routes/user/index'
 import { Route as UserUserIdRouteImport } from './routes/user/$userId'
 
+const TagsRoute = TagsRouteImport.update({
+  id: '/tags',
+  path: '/tags',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LogsRoute = LogsRouteImport.update({
   id: '/logs',
   path: '/logs',
@@ -52,6 +58,7 @@ export interface FileRoutesByFullPath {
   '/$newsId': typeof NewsIdRoute
   '/login': typeof LoginRoute
   '/logs': typeof LogsRoute
+  '/tags': typeof TagsRoute
   '/user/$userId': typeof UserUserIdRoute
   '/user/': typeof UserIndexRoute
 }
@@ -60,6 +67,7 @@ export interface FileRoutesByTo {
   '/$newsId': typeof NewsIdRoute
   '/login': typeof LoginRoute
   '/logs': typeof LogsRoute
+  '/tags': typeof TagsRoute
   '/user/$userId': typeof UserUserIdRoute
   '/user': typeof UserIndexRoute
 }
@@ -69,20 +77,36 @@ export interface FileRoutesById {
   '/$newsId': typeof NewsIdRoute
   '/login': typeof LoginRoute
   '/logs': typeof LogsRoute
+  '/tags': typeof TagsRoute
   '/user/$userId': typeof UserUserIdRoute
   '/user/': typeof UserIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/$newsId' | '/login' | '/logs' | '/user/$userId' | '/user/'
+  fullPaths:
+    | '/'
+    | '/$newsId'
+    | '/login'
+    | '/logs'
+    | '/tags'
+    | '/user/$userId'
+    | '/user/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/$newsId' | '/login' | '/logs' | '/user/$userId' | '/user'
+  to:
+    | '/'
+    | '/$newsId'
+    | '/login'
+    | '/logs'
+    | '/tags'
+    | '/user/$userId'
+    | '/user'
   id:
     | '__root__'
     | '/'
     | '/$newsId'
     | '/login'
     | '/logs'
+    | '/tags'
     | '/user/$userId'
     | '/user/'
   fileRoutesById: FileRoutesById
@@ -92,12 +116,20 @@ export interface RootRouteChildren {
   NewsIdRoute: typeof NewsIdRoute
   LoginRoute: typeof LoginRoute
   LogsRoute: typeof LogsRoute
+  TagsRoute: typeof TagsRoute
   UserUserIdRoute: typeof UserUserIdRoute
   UserIndexRoute: typeof UserIndexRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/tags': {
+      id: '/tags'
+      path: '/tags'
+      fullPath: '/tags'
+      preLoaderRoute: typeof TagsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/logs': {
       id: '/logs'
       path: '/logs'
@@ -148,6 +180,7 @@ const rootRouteChildren: RootRouteChildren = {
   NewsIdRoute: NewsIdRoute,
   LoginRoute: LoginRoute,
   LogsRoute: LogsRoute,
+  TagsRoute: TagsRoute,
   UserUserIdRoute: UserUserIdRoute,
   UserIndexRoute: UserIndexRoute,
 }

@@ -1,6 +1,6 @@
 import { Link, useRouterState } from '@tanstack/react-router'
 import { useState } from 'react'
-import { Home, Menu, X, LogOut, History, User, ShieldCheck } from 'lucide-react'
+import { Home, Menu, X, LogOut, History, User, ShieldCheck, Tag } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { useAuthQuery } from '../query/useAuthQuery'
 import { Button } from './ui/button'
@@ -34,7 +34,7 @@ export default function Header() {
         <div className="flex items-center gap-4">
           <button
             onClick={() => setIsOpen(true)}
-            className="p-2 hover:bg-gray-800 rounded-full transition-colors"
+            className="p-2 hover:bg-gray-800 rounded-full transition-colors text-white"
             aria-label="Open menu"
           >
             <Menu size={20} />
@@ -73,6 +73,9 @@ export default function Header() {
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
                       <Link to="/logs" className="cursor-pointer w-full">Activity Logs</Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link to="/tags" className="cursor-pointer w-full">Tags Management</Link>
                     </DropdownMenuItem>
                   </>
                 )}
@@ -152,6 +155,17 @@ export default function Header() {
               >
                 <History size={20} className="group-hover:scale-110 transition-transform" />
                 <span>Activity Logs</span>
+              </Link>
+              <Link
+                to="/tags"
+                onClick={() => setIsOpen(false)}
+                className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-800 transition-all font-medium text-gray-400 hover:text-white group"
+                activeProps={{
+                  className: 'flex items-center gap-3 p-3 rounded-xl bg-primary/10 text-primary transition-all font-semibold',
+                }}
+              >
+                <Tag size={20} className="group-hover:scale-110 transition-transform" />
+                <span>Tags Management</span>
               </Link>
             </>
           )}
