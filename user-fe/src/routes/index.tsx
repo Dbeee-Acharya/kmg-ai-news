@@ -153,7 +153,7 @@ function App() {
                       <div className="relative min-h-[200px]">
                         {/* Left Date Column - Sticky within this group */}
                         <div className="hidden xl:block absolute -left-48 w-32 top-0 h-full">
-                          <div className="sticky top-[180px] text-right py-4">
+                          <div className="sticky top-[220px] text-right py-4">
                             <div className="text-base font-black text-zinc-900 uppercase tracking-widest">
                               {new Date(newsItems[0].publishedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                             </div>
@@ -183,7 +183,7 @@ function App() {
                         {/* News Items for this date */}
                         <div className="space-y-12 py-8">
                           {/* Mobile Date Header */}
-                          <div className="xl:hidden sticky top-[140px] z-30 -mx-4 px-4 py-2 bg-white/95 backdrop-blur-sm border-b border-zinc-100">
+                          <div className="xl:hidden sticky top-[180px] z-30 -mx-4 px-4 py-2 bg-white/95 backdrop-blur-sm border-b border-zinc-100">
                             <div className="text-sm font-black text-zinc-900 uppercase tracking-widest">
                               {new Date(newsItems[0].publishedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                               <span className="text-zinc-400 font-medium normal-case tracking-normal ml-2">

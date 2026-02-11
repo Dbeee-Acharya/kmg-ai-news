@@ -217,21 +217,28 @@ function NewsDetailPage() {
         )}
 
         {/* Author Footer */}
-        {news.reporter && (
-          <div className="mt-20 p-8 rounded-3xl bg-zinc-50 border border-zinc-100 flex flex-col sm:flex-row items-center gap-6">
-            <div className="text-center sm:text-left">
-              <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1">REPORTER</p>
-              <h4 className="text-2xl font-black text-zinc-900 leading-tight mb-2">
-                {news.reporter.name}
-              </h4>
-              {news.reporter.portfolioLink && (
-                <a 
-                  href={news.reporter.portfolioLink} 
-                  className="inline-flex items-center gap-2 text-sm font-bold text-blue-600 hover:text-blue-800 transition-colors"
-                >
-                  PROFILE <ExternalLink className="w-3.5 h-3.5" />
-                </a>
-              )}
+        {news.authors && news.authors.length > 0 && (
+          <div className="mt-16 pt-8 border-t border-zinc-100">
+            <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-4">REPORTERS</p>
+            <div className="flex flex-col gap-3">
+              {news.authors.map((author: any, i: number) => (
+                <div key={i} className="flex items-center gap-3">
+                  <h4 className="text-base font-bold text-zinc-900 leading-tight">
+                    {author.name}
+                  </h4>
+                  {author.portfolioLink && (
+                    <a 
+                      href={author.portfolioLink} 
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-zinc-400 hover:text-zinc-900 transition-colors"
+                      aria-label={`${author.name} Portfolio`}
+                    >
+                      <ExternalLink className="w-3.5 h-3.5" />
+                    </a>
+                  )}
+                </div>
+              ))}
             </div>
           </div>
         )}

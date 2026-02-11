@@ -18,10 +18,10 @@ interface NewsCardProps {
     publishedAt: string;
     eventDateEn?: string | null;
     eventDateNp?: string | null;
-    reporter?: {
+    authors?: {
       name: string;
       portfolioLink?: string | null;
-    } | null;
+    }[] | null;
     media: {
       type: string;
       url: string;
@@ -57,8 +57,10 @@ const NewsCard: React.FC<NewsCardProps> = ({ news, className }) => {
   };
 
   const sortedMedia = [...(news.media || [])].sort((a: any, b: any) => a.sortOrder - b.sortOrder);
-  const firstMedia = sortedMedia[0];
-  const galleryMedia = sortedMedia.slice(1);
+  // Re-reading user request: "only show the top 3 images and a small hint saying there is more to see"
+  // So total 3 images.
+  const previewMedia = sortedMedia.slice(0, 3);
+  const hasMoreMedia = sortedMedia.length > 3;
 
   return (
     <Card className={cn("group overflow-hidden border-zinc-200 bg-white shadow-sm hover:shadow-md transition-shadow duration-300 rounded-xl relative", className)}>
@@ -106,37 +108,52 @@ const NewsCard: React.FC<NewsCardProps> = ({ news, className }) => {
             )}
           </CardHeader>
 
-          {firstMedia && (
+          {previewMedia.length > 0 && (
             <div className="space-y-4">
-              {/* Main Image */}
-              <div className="rounded-xl overflow-hidden border border-zinc-100 shadow-sm bg-zinc-50">
-                <AspectRatio ratio={isVertical[firstMedia.url] ? 9 / 16 : 5 / 3}>
-                  <MediaRenderer 
-                    media={firstMedia}
-                    alt={news.title}
-                    onLoad={(e) => handleImageLoad(firstMedia.url, e)}
-                    className="grayscale-[0.3] hover:grayscale-0 transition-all duration-700"
-                  />
-                </AspectRatio>
-              </div>
-
-              {/* Multi-image thumbnail grid */}
-              {galleryMedia.length > 0 && (
-                <div className="grid grid-cols-2 md:grid-cols-2 gap-4">
-                  {galleryMedia.map((item: any, i: number) => (
-                    <div key={i} className="rounded-lg overflow-hidden border border-zinc-100 shadow-xs bg-zinc-50">
-                      <AspectRatio ratio={isVertical[item.url] ? 9 / 16 : 5 / 3}>
-                        <MediaRenderer 
-                          media={item}
-                          alt={`${news.title} ${i + 2}`}
-                          onLoad={(e) => handleImageLoad(item.url, e)}
-                          className="opacity-80 hover:opacity-100 grayscale hover:grayscale-0 transition-all duration-500"
-                        />
-                      </AspectRatio>
-                    </div>
-                  ))}
+              {/* Image Preview Grid */}
+              <Link to="/n/$newsSlug" params={{ newsSlug: news.slug }} className="block space-y-4">
+                {/* Main Image (Top 1) */}
+                <div className="rounded-xl overflow-hidden border border-zinc-100 shadow-sm bg-zinc-50">
+                  <AspectRatio ratio={isVertical[previewMedia[0].url] ? 9 / 16 : 5 / 3}>
+                    <MediaRenderer 
+                      media={previewMedia[0]}
+                      alt={news.title}
+                      onLoad={(e) => handleImageLoad(previewMedia[0].url, e)}
+                      className="grayscale-[0.3] hover:grayscale-0 transition-all duration-700"
+                    />
+                  </AspectRatio>
                 </div>
-              )}
+
+                {/* Sub-images (Next 2) */}
+                {previewMedia.length > 1 && (
+                  <div className="grid grid-cols-2 gap-4 relative">
+                    {previewMedia.slice(1, 3).map((item: any, i: number) => (
+                      <div key={i} className="rounded-lg overflow-hidden border border-zinc-100 shadow-xs bg-zinc-50 relative">
+                        <AspectRatio ratio={isVertical[item.url] ? 9 / 16 : 5 / 3}>
+                          <MediaRenderer 
+                            media={item}
+                            alt={`${news.title} ${i + 2}`}
+                            onLoad={(e) => handleImageLoad(item.url, e)}
+                            className="opacity-80 hover:opacity-100 grayscale hover:grayscale-0 transition-all duration-500"
+                          />
+                        </AspectRatio>
+                        {/* More hint on the last preview thumbnail if more images exist */}
+                        {i === 1 && hasMoreMedia && (
+                          <div className="absolute inset-0 bg-black/50 flex items-center justify-center backdrop-blur-[2px]">
+                            <span className="text-white text-xs font-bold tracking-widest uppercase">+{sortedMedia.length - 3} More</span>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                    {/* fallback hint if only 2 images total but more exists (unlikely with slice logic but safe) */}
+                    {previewMedia.length === 2 && hasMoreMedia && (
+                       <div className="absolute right-0 top-0 bottom-0 flex items-center pr-2 pointer-events-none">
+                          <Badge variant="secondary" className="bg-white/80 backdrop-blur-sm text-[10px] font-bold">+{sortedMedia.length - 2} MORE</Badge>
+                       </div>
+                    )}
+                  </div>
+                )}
+              </Link>
             </div>
           )}
         </div>
@@ -144,12 +161,12 @@ const NewsCard: React.FC<NewsCardProps> = ({ news, className }) => {
         {/* Right Column / Middle on Mobile: Description & Links */}
         <div className="flex-1 p-6 md:p-8 md:border-l border-zinc-100 flex flex-col justify-between">
           <div className="space-y-6">
-            <div className="text-black leading-relaxed text-sm md:text-base font-normal text-left">
+            <Link to="/n/$newsSlug" params={{ newsSlug: news.slug }} className="block text-black leading-relaxed text-sm md:text-base font-normal text-left hover:text-zinc-600 transition-colors">
               <div 
                 dangerouslySetInnerHTML={{ __html: news.content }} 
                 className="prose prose-zinc max-w-none text-black font-sans line-clamp-[12] text-[16px]"
               />
-            </div>
+            </Link>
 
             {news.links.length > 0 && (
               <div className="pt-6 border-t border-zinc-100">
@@ -176,24 +193,27 @@ const NewsCard: React.FC<NewsCardProps> = ({ news, className }) => {
             )}
           </div>
 
-          {news.reporter && (
-            <div className="mt-8 pt-6 border-t border-zinc-50 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div>
-                  <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Reported by</p>
-                  <p className="text-xs font-semibold text-zinc-900">{news.reporter.name}</p>
-                </div>
-              </div>
-              {news.reporter.portfolioLink && (
-                <a 
-                  href={news.reporter.portfolioLink}
-                  target=""
-                  className="text-zinc-400 hover:text-zinc-900 transition-colors"
-                  aria-label="Reporter Portfolio"
-                >
-                  <ExternalLink className="w-4 h-4" />
-                </a>
-              )}
+          {news.authors && news.authors.length > 0 && (
+            <div className="mt-8 pt-6 border-t border-zinc-50 space-y-3">
+               <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Reported by</p>
+               <div className="flex flex-wrap gap-4">
+                  {news.authors.map((author: any, i: number) => (
+                    <div key={i} className="flex items-center justify-between gap-2 bg-zinc-50 px-3 py-2 rounded-lg border border-zinc-100 min-w-[120px]">
+                      <span className="text-xs font-semibold text-zinc-900">{author.name}</span>
+                      {author.portfolioLink && (
+                        <a 
+                          href={author.portfolioLink}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-zinc-400 hover:text-zinc-900 transition-colors"
+                          aria-label={`Reporter ${author.name} Portfolio`}
+                        >
+                          <ExternalLink className="w-3.5 h-3.5" />
+                        </a>
+                      )}
+                    </div>
+                  ))}
+               </div>
             </div>
           )}
         </div>
