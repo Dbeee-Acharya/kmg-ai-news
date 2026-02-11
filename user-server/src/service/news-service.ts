@@ -6,23 +6,23 @@ import {
   newsLinks, 
   newsPlatforms,
   newsTags,
+  newsAuthors,
   tags 
 } from '../db/schema.js';
 import { eq, and, desc, asc, lte, gte, sql, inArray } from 'drizzle-orm';
 import { cacheService } from './cache-service.js';
 
+const CACHE_TTL = 120; // 2 minutes
+
 export class NewsService {
   /**
    * Get paginated news in blocks of 5 days
-   * @param page Page number (0-indexed)
-   * @param platform Optional platform filter
    */
   static async getPaginatedNews(page: number = 0, platform?: string) {
     const cacheKey = cacheService.generateKey('news_list', { page, platform: platform || 'all' });
     const cached = await cacheService.get(cacheKey);
     if (cached) return cached;
 
-    // Calculate date range: page 0 = now to 5 days ago, page 1 = 5 to 10 days ago, etc.
     const now = new Date();
     const endDate = new Date(now);
     endDate.setDate(now.getDate() - (page * 5));
@@ -30,7 +30,6 @@ export class NewsService {
     const startDate = new Date(now);
     startDate.setDate(now.getDate() - ((page + 1) * 5));
 
-    // Base filters
     const filters = [
       eq(news.isPublished, true),
       lte(news.publishedAt, endDate),
@@ -50,15 +49,9 @@ export class NewsService {
       publishedAt: news.publishedAt,
       eventDateEn: news.eventDateEn,
       eventDateNp: news.eventDateNp,
-      reporter: {
-        name: users.name,
-        portfolioLink: users.portfolioLink,
-      }
     })
-    .from(news)
-    .leftJoin(users, eq(news.reporterId, users.id));
+    .from(news);
 
-    // Conditionally join platforms if filtering by one
     if (platform) {
       (query as any).innerJoin(newsPlatforms, eq(news.id, newsPlatforms.newsId));
     }
@@ -69,7 +62,7 @@ export class NewsService {
 
     const results = await this.attachRelations(newsItems);
 
-    await cacheService.set(cacheKey, results);
+    await cacheService.set(cacheKey, results, CACHE_TTL);
     return results;
   }
 
@@ -81,7 +74,6 @@ export class NewsService {
     const cached = await cacheService.get(cacheKey);
     if (cached) return cached;
 
-    // Use full-text search on title, content, metadata + array containment for tags
     const searchTerms = queryText.trim().split(/\s+/).join(' & ');
     
     const newsItems = await db.select({
@@ -93,13 +85,8 @@ export class NewsService {
       publishedAt: news.publishedAt,
       eventDateEn: news.eventDateEn,
       eventDateNp: news.eventDateNp,
-      reporter: {
-        name: users.name,
-        portfolioLink: users.portfolioLink,
-      }
     })
     .from(news)
-    .leftJoin(users, eq(news.reporterId, users.id))
     .where(
       and(
         eq(news.isPublished, true),
@@ -120,19 +107,19 @@ export class NewsService {
 
     const results = await this.attachRelations(newsItems);
 
-    await cacheService.set(cacheKey, results);
+    await cacheService.set(cacheKey, results, CACHE_TTL);
     return results;
   }
 
   /**
-   * Helper to attach media and links to news items in bulk (tags are now on news record)
+   * Attach media, links, tags, and authors to news items in bulk
    */
   private static async attachRelations(newsItems: any[]) {
     if (newsItems.length === 0) return [];
 
     const newsIds = newsItems.map(item => item.id);
 
-    // 1. Get all Media for these news items
+    // Media
     const allMedia = await db.select({
       newsId: newsMedia.newsId,
       type: newsMedia.type,
@@ -143,7 +130,7 @@ export class NewsService {
     .where(inArray(newsMedia.newsId, newsIds))
     .orderBy(asc(newsMedia.sortOrder));
 
-    // 2. Get all Links for these news items
+    // Links
     const allLinks = await db.select({
       newsId: newsLinks.newsId,
       label: newsLinks.label,
@@ -154,7 +141,7 @@ export class NewsService {
     .where(inArray(newsLinks.newsId, newsIds))
     .orderBy(asc(newsLinks.sortOrder));
 
-    // 3. Get all Tags for these news items
+    // Tags
     const allNewsTags = await db.select({
       newsId: newsTags.newsId,
       name: tags.name,
@@ -163,7 +150,16 @@ export class NewsService {
     .innerJoin(tags, eq(newsTags.tagId, tags.id))
     .where(inArray(newsTags.newsId, newsIds));
 
-    // Map relations back to news items
+    // Authors
+    const allAuthors = await db.select({
+      newsId: newsAuthors.newsId,
+      name: users.name,
+      portfolioLink: users.portfolioLink,
+    })
+    .from(newsAuthors)
+    .innerJoin(users, eq(newsAuthors.userId, users.id))
+    .where(inArray(newsAuthors.newsId, newsIds));
+
     return newsItems.map(item => {
       const { id, ...rest } = item;
       return {
@@ -171,21 +167,21 @@ export class NewsService {
         media: allMedia.filter(m => m.newsId === id).map(({ newsId, ...m }) => m),
         links: allLinks.filter(l => l.newsId === id).map(({ newsId, ...l }) => l),
         tags: allNewsTags.filter(t => t.newsId === id).map(t => t.name),
+        authors: allAuthors.filter(a => a.newsId === id).map(({ newsId, ...a }) => a),
       };
     });
   }
 
   /**
-   * Get news details by slug including media, links, and tags
+   * Get news details by slug
    */
   static async getNewsBySlug(slug: string) {
     const cacheKey = cacheService.generateKey('news_detail', { slug });
     const cached = await cacheService.get(cacheKey);
     if (cached) return cached;
 
-    // 1. Get main news record (tags are now directly on the news record)
     const [record] = await db.select({
-      id: news.id, // We need ID to fetch relations but won't return it in final object
+      id: news.id,
       title: news.title,
       content: news.content,
       slug: news.slug,
@@ -194,13 +190,8 @@ export class NewsService {
       publishedAt: news.publishedAt,
       eventDateEn: news.eventDateEn,
       eventDateNp: news.eventDateNp,
-      reporter: {
-        name: users.name,
-        portfolioLink: users.portfolioLink,
-      }
     })
     .from(news)
-    .leftJoin(users, eq(news.reporterId, users.id))
     .where(and(eq(news.slug, slug), eq(news.isPublished, true)))
     .limit(1);
 
@@ -208,7 +199,7 @@ export class NewsService {
 
     const newsId = record.id;
 
-    // 2. Get Media
+    // Media
     const media = await db.select({
       type: newsMedia.type,
       url: newsMedia.url,
@@ -218,7 +209,7 @@ export class NewsService {
     .where(eq(newsMedia.newsId, newsId))
     .orderBy(asc(newsMedia.sortOrder));
 
-    // 3. Get Links
+    // Links
     const links = await db.select({
       label: newsLinks.label,
       url: newsLinks.url,
@@ -228,29 +219,37 @@ export class NewsService {
     .where(eq(newsLinks.newsId, newsId))
     .orderBy(asc(newsLinks.sortOrder));
 
-    // 4. Get Tags
+    // Tags
     const tagRows = await db.select({ name: tags.name })
       .from(newsTags)
       .innerJoin(tags, eq(newsTags.tagId, tags.id))
       .where(eq(newsTags.newsId, newsId));
 
-    // Assemble final response (excluding internal ID)
+    // Authors
+    const authorRows = await db.select({
+      name: users.name,
+      portfolioLink: users.portfolioLink,
+    })
+    .from(newsAuthors)
+    .innerJoin(users, eq(newsAuthors.userId, users.id))
+    .where(eq(newsAuthors.newsId, newsId));
+
     const finalResponse = {
       title: record.title,
       content: record.content,
       slug: record.slug,
       keywords: record.keywords,
       tags: tagRows.map(t => t.name),
+      authors: authorRows,
       metadata: record.metadata || '',
       publishedAt: record.publishedAt,
       eventDateEn: record.eventDateEn,
       eventDateNp: record.eventDateNp,
-      reporter: record.reporter,
       media,
       links,
     };
 
-    await cacheService.set(cacheKey, finalResponse);
+    await cacheService.set(cacheKey, finalResponse, CACHE_TTL);
     return finalResponse;
   }
 }
