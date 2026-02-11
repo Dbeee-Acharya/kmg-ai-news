@@ -3,6 +3,7 @@ import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useEffect, useState } from 'react'
 import { useNewsQuery } from '../query/useNewsQuery'
 import { useTagsQuery } from '../query/useTagsQuery'
+import { useReportersQuery } from '../query/useReportersQuery'
 import { Button } from '../components/ui/button'
 import { Input } from '../components/ui/input'
 import { MultiSelect } from '../components/ui/multi-select'
@@ -40,6 +41,7 @@ function NewsDetailComponent() {
   const navigate = useNavigate()
   const { useNewsItemQuery, createNews, updateNews, uploadMedia, isUploading } = useNewsQuery()
   const { tags: allTags, isLoading: isTagsLoading } = useTagsQuery()
+  const { reporters: allReporters, isLoading: isReportersLoading } = useReportersQuery()
   
   const isEdit = newsId !== 'add-news'
   const { data: newsData, isLoading: isDataLoading } = useNewsItemQuery(newsId)
@@ -52,8 +54,9 @@ function NewsDetailComponent() {
     isPublished: false,
     eventDateEn: '',
     eventDateNp: '',
-    platforms: [],
+     platforms: [],
     tags: [],
+    authors: [],
     media: [],
     links: [],
   })
@@ -69,8 +72,9 @@ function NewsDetailComponent() {
         ...newsData,
         eventDateEn: newsData.eventDateEn || '',
         keywords: newsData.keywords || [],
-        platforms: newsData.platforms || [],
+         platforms: newsData.platforms || [],
         tags: newsData.tags || [],
+        authors: newsData.authors?.map((a: any) => a.userId) || [],
         media: newsData.media || [],
         links: newsData.links || [],
       })
@@ -561,12 +565,31 @@ function NewsDetailComponent() {
                       </Badge>
                     </div>
                     
-                    <MultiSelect
-                      options={allTags || []}
+                     <MultiSelect
+                      options={allTags?.map((t: any) => ({ id: t.name, name: t.name })) || []}
                       selected={formData.tags}
                       onChange={(tags) => setFormData((prev: any) => ({ ...prev, tags }))}
-                      placeholder={isTagsLoading ? "Loading tags..." : "Select tags..."}
+                      placeholder={isTagsLoading ? "Loading tags..." : "Browse tags..."}
                       maxItems={5}
+                    />
+                  </div>
+
+                  <Separator />
+
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <Label>Authors / Reporters</Label>
+                      <Badge variant="outline" className="text-[10px] font-normal">
+                        {formData.authors.length} selected
+                      </Badge>
+                    </div>
+                    
+                    <MultiSelect
+                      options={allReporters?.map((r: any) => ({ id: r.id, name: r.name })) || []}
+                      selected={formData.authors}
+                      onChange={(authors) => setFormData((prev: any) => ({ ...prev, authors }))}
+                      placeholder={isReportersLoading ? "Loading reporters..." : "Add authors..."}
+                      maxItems={10}
                     />
                   </div>
 

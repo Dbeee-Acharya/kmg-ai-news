@@ -253,6 +253,29 @@ export const newsTags = pgTable(
 );
 
 // ============================================================================
+// NEWS AUTHORS (M:N Join Table)
+// ============================================================================
+
+export const newsAuthors = pgTable(
+  "news_authors",
+  {
+    newsId: uuid("news_id")
+      .notNull()
+      .references(() => news.id, { onDelete: "cascade" }),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("news_authors_pk").on(table.newsId, table.userId),
+    index("news_authors_user_idx").on(table.userId),
+  ],
+);
+
+// ============================================================================
 // TYPE EXPORTS
 // ============================================================================
 
@@ -279,3 +302,7 @@ export type NewTag = typeof tags.$inferInsert;
 
 export type NewsTag = typeof newsTags.$inferSelect;
 export type NewNewsTag = typeof newsTags.$inferInsert;
+
+export type NewsAuthor = typeof newsAuthors.$inferSelect;
+export type NewNewsAuthor = typeof newsAuthors.$inferInsert;
+

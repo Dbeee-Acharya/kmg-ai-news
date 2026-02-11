@@ -1,13 +1,13 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { newsApi } from "../api/news-api.js";
+import { newsApi, type NewsFilterParams } from "../api/news-api.js";
 import { api } from "../lib/axios.js";
 
-export const useNewsQuery = () => {
+export const useNewsQuery = (filters: NewsFilterParams = {}) => {
   const queryClient = useQueryClient();
 
   const newsQuery = useQuery({
-    queryKey: ["news"],
-    queryFn: newsApi.getAll,
+    queryKey: ["news", filters],
+    queryFn: () => newsApi.getAll(filters),
   });
 
   const createMutation = useMutation({
@@ -48,8 +48,28 @@ export const useNewsQuery = () => {
     enabled: !!id && id !== 'add-news',
   });
 
+  const addAuthorMutation = useMutation({
+    mutationFn: ({ newsId, userId }: { newsId: string; userId: string }) =>
+      newsApi.addAuthor(newsId, userId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["news"] });
+    },
+  });
+
+  const removeAuthorMutation = useMutation({
+    mutationFn: ({ newsId, userId }: { newsId: string; userId: string }) =>
+      newsApi.removeAuthor(newsId, userId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["news"] });
+    },
+  });
+
   return {
-    news: newsQuery.data,
+    newsData: newsQuery.data,
+    news: newsQuery.data?.data,
+    total: newsQuery.data?.total || 0,
+    totalPages: newsQuery.data?.totalPages || 0,
+    currentPage: newsQuery.data?.page || 1,
     isLoading: newsQuery.isLoading,
     isError: newsQuery.isError,
     useNewsItemQuery,
@@ -58,5 +78,7 @@ export const useNewsQuery = () => {
     deleteNews: deleteMutation.mutateAsync,
     uploadMedia: uploadMutation.mutateAsync,
     isUploading: uploadMutation.isPending,
+    addAuthor: addAuthorMutation.mutateAsync,
+    removeAuthor: removeAuthorMutation.mutateAsync,
   };
 };

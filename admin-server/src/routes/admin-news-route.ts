@@ -11,8 +11,17 @@ newsRouter.use('*', adminAuthMiddleware);
 
 newsRouter.get('/', async (c) => {
   const user = c.get('user');
+  const { page, limit, startDate, endDate, tags, sortOrder } = c.req.query();
   try {
-    const res = await AdminNewsService.getNews(user);
+    const filters = {
+      page: page ? parseInt(page) : undefined,
+      limit: limit ? parseInt(limit) : undefined,
+      startDate: startDate || undefined,
+      endDate: endDate || undefined,
+      tags: tags ? tags.split(',').filter(Boolean) : undefined,
+      sortOrder: (sortOrder === 'asc' || sortOrder === 'desc') ? sortOrder as 'asc' | 'desc' : undefined,
+    };
+    const res = await AdminNewsService.getNews(user, filters);
     return c.json(res);
   } catch (error: any) {
     return c.json({ error: error.message }, 500);
@@ -69,6 +78,29 @@ newsRouter.delete('/:id', async (c) => {
   try {
     const res = await AdminNewsService.deleteNews(id, user, ip, userAgent);
     return c.json({ message: 'News deleted', id: res?.id });
+  } catch (error: any) {
+    return c.json({ error: error.message }, 400);
+  }
+});
+
+// Author management
+newsRouter.post('/:id/authors', async (c) => {
+  const newsId = c.req.param('id');
+  const { userId } = await c.req.json();
+  try {
+    await AdminNewsService.addAuthor(newsId, userId);
+    return c.json({ message: 'Author added' });
+  } catch (error: any) {
+    return c.json({ error: error.message }, 400);
+  }
+});
+
+newsRouter.delete('/:id/authors/:userId', async (c) => {
+  const newsId = c.req.param('id');
+  const userId = c.req.param('userId');
+  try {
+    await AdminNewsService.removeAuthor(newsId, userId);
+    return c.json({ message: 'Author removed' });
   } catch (error: any) {
     return c.json({ error: error.message }, 400);
   }

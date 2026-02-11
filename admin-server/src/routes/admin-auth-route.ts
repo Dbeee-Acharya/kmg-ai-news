@@ -31,7 +31,7 @@ authRouter.post('/reporters', adminAuthMiddleware, superAdminAuthMiddleware, asy
   }
 });
 
-authRouter.get('/reporters', adminAuthMiddleware, superAdminAuthMiddleware, async (c) => {
+authRouter.get('/reporters', adminAuthMiddleware, async (c) => {
   try {
     const users = await AdminAuthService.getUsers();
     return c.json(users);

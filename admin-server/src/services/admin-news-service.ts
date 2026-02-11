@@ -1,14 +1,73 @@
 import { db } from '../db/index.js';
-import { news, newsPlatforms, newsMedia, newsLinks, newsTags, tags, type NewNews } from '../db/schema.js';
-import { eq, desc } from 'drizzle-orm';
+import { news, newsPlatforms, newsMedia, newsLinks, newsTags, tags, newsAuthors, users, type NewNews } from '../db/schema.js';
+import { eq, desc, asc, gte, lte, inArray, and, sql, count, countDistinct } from 'drizzle-orm';
 import { ActivityLogService } from './activity-log-service.js';
 import { TagsService } from './tags-service.js';
 
+export interface NewsFilterParams {
+  page?: number;
+  limit?: number;
+  startDate?: string;
+  endDate?: string;
+  tags?: string[];
+  sortOrder?: 'asc' | 'desc';
+}
+
 export class AdminNewsService {
-  static async getNews(authUser: any) {
-    return await db.select()
+  static async getNews(authUser: any, filters: NewsFilterParams = {}) {
+    const page = Math.max(1, filters.page || 1);
+    const limit = Math.min(100, Math.max(1, filters.limit || 20));
+    const offset = (page - 1) * limit;
+    const order = filters.sortOrder === 'asc' ? asc(news.createdAt) : desc(news.createdAt);
+
+    // Build WHERE conditions
+    const conditions: any[] = [];
+
+    if (filters.startDate) {
+      conditions.push(gte(news.createdAt, new Date(filters.startDate)));
+    }
+    if (filters.endDate) {
+      // End of day
+      const end = new Date(filters.endDate);
+      end.setHours(23, 59, 59, 999);
+      conditions.push(lte(news.createdAt, end));
+    }
+
+    // If filtering by tags, we need a subquery to find matching news IDs
+    if (filters.tags && filters.tags.length > 0) {
+      const matchingNewsIds = db
+        .selectDistinct({ newsId: newsTags.newsId })
+        .from(newsTags)
+        .innerJoin(tags, eq(newsTags.tagId, tags.id))
+        .where(inArray(tags.name, filters.tags));
+
+      conditions.push(inArray(news.id, matchingNewsIds));
+    }
+
+    const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+
+    // Get total count
+    const [{ total }] = await db
+      .select({ total: count() })
       .from(news)
-      .orderBy(desc(news.createdAt));
+      .where(whereClause);
+
+    // Get paginated data
+    const data = await db
+      .select()
+      .from(news)
+      .where(whereClause)
+      .orderBy(order)
+      .limit(limit)
+      .offset(offset);
+
+    return {
+      data,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
   }
 
   static async getNewsById(id: string, authUser: any) {
@@ -25,6 +84,10 @@ export class AdminNewsService {
       .from(newsTags)
       .innerJoin(tags, eq(newsTags.tagId, tags.id))
       .where(eq(newsTags.newsId, id));
+    const authorRows = await db.select({ userId: newsAuthors.userId, name: users.name, email: users.email })
+      .from(newsAuthors)
+      .innerJoin(users, eq(newsAuthors.userId, users.id))
+      .where(eq(newsAuthors.newsId, id));
 
     return {
       ...record,
@@ -32,6 +95,7 @@ export class AdminNewsService {
       media,
       links,
       tags: tagRows.map(t => t.name),
+      authors: authorRows,
       metadata: record.metadata || '',
     };
   }
@@ -98,6 +162,20 @@ export class AdminNewsService {
         if (linksData.length > 0) {
           await tx.insert(newsLinks).values(linksData);
         }
+      }
+
+      // 6. Handle Authors — auto-add creator + any extras
+      const authorUserIds = new Set<string>();
+      if (authUser.userId && authUser.userId !== 'super-admin-uuid') {
+        authorUserIds.add(authUser.userId);
+      }
+      if (data.authors && Array.isArray(data.authors)) {
+        data.authors.forEach((id: string) => authorUserIds.add(id));
+      }
+      if (authorUserIds.size > 0) {
+        await tx.insert(newsAuthors).values(
+          Array.from(authorUserIds).map(userId => ({ newsId, userId }))
+        );
       }
 
       // Log activity
@@ -189,6 +267,16 @@ export class AdminNewsService {
         }
       }
 
+      // 6. Update Authors (if provided)
+      if (data.authors && Array.isArray(data.authors)) {
+        await tx.delete(newsAuthors).where(eq(newsAuthors.newsId, id));
+        if (data.authors.length > 0) {
+          await tx.insert(newsAuthors).values(
+            data.authors.map((userId: string) => ({ newsId: id, userId }))
+          );
+        }
+      }
+
       // Log activity
       await ActivityLogService.log({
         userId: authUser.userId,
@@ -224,5 +312,14 @@ export class AdminNewsService {
     }
 
     return deleted;
+  }
+
+  static async addAuthor(newsId: string, userId: string) {
+    await db.insert(newsAuthors).values({ newsId, userId }).onConflictDoNothing();
+  }
+
+  static async removeAuthor(newsId: string, userId: string) {
+    await db.delete(newsAuthors)
+      .where(and(eq(newsAuthors.newsId, newsId), eq(newsAuthors.userId, userId)));
   }
 }
