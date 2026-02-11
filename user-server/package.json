@@ -1,6 +1,7 @@
 {
-  "name": "user-server",
+  "name": "fact-checker-user:server",
   "type": "module",
+  "version": "1.0.0",
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "tsc",

@@ -1,5 +1,5 @@
 {
-  "name": "admin-fe",
+  "name": "fact-checker-admin:fe",
   "private": true,
   "type": "module",
   "scripts": {

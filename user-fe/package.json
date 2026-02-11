@@ -1,5 +1,5 @@
 {
-  "name": "user-fe",
+  "name": "fact-checker-user:fe",
   "private": true,
   "type": "module",
   "scripts": {
