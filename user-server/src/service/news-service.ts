@@ -4,9 +4,11 @@ import {
   users, 
   newsMedia, 
   newsLinks, 
-  newsPlatforms 
+  newsPlatforms,
+  newsTags,
+  tags 
 } from '../db/schema.js';
-import { eq, and, desc, asc, lte, gte, sql, inArray, arrayContains } from 'drizzle-orm';
+import { eq, and, desc, asc, lte, gte, sql, inArray } from 'drizzle-orm';
 import { cacheService } from './cache-service.js';
 
 export class NewsService {
@@ -44,7 +46,6 @@ export class NewsService {
       title: news.title,
       slug: news.slug,
       content: news.content,
-      tags: news.tags,
       metadata: news.metadata,
       publishedAt: news.publishedAt,
       eventDateEn: news.eventDateEn,
@@ -88,7 +89,6 @@ export class NewsService {
       title: news.title,
       slug: news.slug,
       content: news.content,
-      tags: news.tags,
       metadata: news.metadata,
       publishedAt: news.publishedAt,
       eventDateEn: news.eventDateEn,
@@ -106,7 +106,12 @@ export class NewsService {
         sql`(
           to_tsvector('simple', coalesce(${news.title}, '') || ' ' || coalesce(${news.content}, '') || ' ' || coalesce(${news.metadata}, ''))
           @@ to_tsquery('simple', ${searchTerms})
-          OR array_to_string(${news.tags}, ' ') ILIKE ${'%' + queryText.toLowerCase().trim() + '%'}
+          OR EXISTS (
+            SELECT 1 FROM ${newsTags}
+            INNER JOIN ${tags} ON ${newsTags.tagId} = ${tags.id}
+            WHERE ${newsTags.newsId} = ${news.id}
+            AND ${tags.name} ILIKE ${'%' + queryText.toLowerCase().trim() + '%'}
+          )
         )`
       )
     )
@@ -149,14 +154,23 @@ export class NewsService {
     .where(inArray(newsLinks.newsId, newsIds))
     .orderBy(asc(newsLinks.sortOrder));
 
-    // Map relations back to news items (tags are already on the record)
+    // 3. Get all Tags for these news items
+    const allNewsTags = await db.select({
+      newsId: newsTags.newsId,
+      name: tags.name,
+    })
+    .from(newsTags)
+    .innerJoin(tags, eq(newsTags.tagId, tags.id))
+    .where(inArray(newsTags.newsId, newsIds));
+
+    // Map relations back to news items
     return newsItems.map(item => {
       const { id, ...rest } = item;
       return {
         ...rest,
         media: allMedia.filter(m => m.newsId === id).map(({ newsId, ...m }) => m),
         links: allLinks.filter(l => l.newsId === id).map(({ newsId, ...l }) => l),
-        tags: item.tags || [],
+        tags: allNewsTags.filter(t => t.newsId === id).map(t => t.name),
       };
     });
   }
@@ -176,7 +190,6 @@ export class NewsService {
       content: news.content,
       slug: news.slug,
       keywords: news.keywords,
-      tags: news.tags,
       metadata: news.metadata,
       publishedAt: news.publishedAt,
       eventDateEn: news.eventDateEn,
@@ -215,13 +228,19 @@ export class NewsService {
     .where(eq(newsLinks.newsId, newsId))
     .orderBy(asc(newsLinks.sortOrder));
 
+    // 4. Get Tags
+    const tagRows = await db.select({ name: tags.name })
+      .from(newsTags)
+      .innerJoin(tags, eq(newsTags.tagId, tags.id))
+      .where(eq(newsTags.newsId, newsId));
+
     // Assemble final response (excluding internal ID)
     const finalResponse = {
       title: record.title,
       content: record.content,
       slug: record.slug,
       keywords: record.keywords,
-      tags: record.tags || [],
+      tags: tagRows.map(t => t.name),
       metadata: record.metadata || '',
       publishedAt: record.publishedAt,
       eventDateEn: record.eventDateEn,
