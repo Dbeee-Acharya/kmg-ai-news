@@ -29,7 +29,7 @@ import {
   RefreshCw
 } from 'lucide-react'
 
-import { slugify } from 'transliteration'
+import { generateSlugFromTitle } from '../lib/slug-utils'
 
 export const Route = createFileRoute('/$newsId')({
   component: NewsDetailComponent,
@@ -64,6 +64,7 @@ function NewsDetailComponent() {
   const [newKeyword, setNewKeyword] = useState('')
   const [isSaving, setIsSaving] = useState(false)
   const [isAutoSlug, setIsAutoSlug] = useState(!isEdit)
+  const [isSlugLoading, setIsSlugLoading] = useState(false)
 
   // Sync data when fetching is done
   useEffect(() => {
@@ -91,18 +92,33 @@ function NewsDetailComponent() {
 
   const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const title = e.target.value
-    setFormData((prev: any) => ({
-      ...prev,
-      title,
-      slug: isAutoSlug ? slugify(title).toLowerCase().replace(/[^a-z0-9-]/g, '').replace(/-+/g, '-') : prev.slug,
-    }))
+    setFormData((prev: any) => ({ ...prev, title }))
   }
 
-  const regenerateSlug = () => {
-    setFormData((prev: any) => ({
-      ...prev,
-      slug: slugify(formData.title).toLowerCase().replace(/[^a-z0-9-]/g, '').replace(/-+/g, '-'),
-    }))
+  // Debounced Slug Generation
+  useEffect(() => {
+    if (isAutoSlug && formData.title.trim()) {
+      const timer = setTimeout(async () => {
+        setIsSlugLoading(true)
+        try {
+          const slug = await generateSlugFromTitle(formData.title)
+          setFormData((prev: any) => ({ ...prev, slug }))
+        } finally {
+          setIsSlugLoading(false)
+        }
+      }, 1000) // 1s debounce
+      return () => clearTimeout(timer)
+    }
+  }, [formData.title, isAutoSlug])
+
+  const regenerateSlug = async () => {
+    setIsSlugLoading(true)
+    try {
+      const slug = await generateSlugFromTitle(formData.title)
+      setFormData((prev: any) => ({ ...prev, slug }))
+    } finally {
+      setIsSlugLoading(false)
+    }
   }
 
 
@@ -305,22 +321,30 @@ function NewsDetailComponent() {
                       </Button>
                     </div>
                   </div>
-                  <Input 
-                    id="slug" 
-                    value={formData.slug} 
-                    onChange={(e) => {
-                      // Sanitize: lowercase, replace spaces/special chars with hyphen, only allow a-z and -
-                      const sanitized = e.target.value
-                        .toLowerCase()
-                        .replace(/\s+/g, '-')           // Replace spaces with hyphens
-                        .replace(/[^a-z0-9-]/g, '')    // Remove anything that's not a-z, 0-9, or hyphen
-                        .replace(/-+/g, '-')            // Collapse multiple hyphens
-                      setFormData({...formData, slug: sanitized})
-                      setIsAutoSlug(false)
-                    }} 
-                    placeholder="url-slug-here"
-                    required 
-                  />
+                   <div className="relative">
+                    <Input 
+                      id="slug" 
+                      value={formData.slug} 
+                      onChange={(e) => {
+                        // Sanitize: lowercase, replace spaces/special chars with hyphen, only allow a-z and -
+                        const sanitized = e.target.value
+                          .toLowerCase()
+                          .replace(/\s+/g, '-')           // Replace spaces with hyphens
+                          .replace(/[^a-z0-9-]/g, '')    // Remove anything that's not a-z, 0-9, or hyphen
+                          .replace(/-+/g, '-')            // Collapse multiple hyphens
+                        setFormData({...formData, slug: sanitized})
+                        setIsAutoSlug(false)
+                      }} 
+                      placeholder="url-slug-here"
+                      required 
+                      className={isSlugLoading ? "pr-10" : ""}
+                    />
+                    {isSlugLoading && (
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                        <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+                      </div>
+                    )}
+                  </div>
                   <p className="text-[10px] text-muted-foreground">
                     URL-friendly Romanized version of the title. Essential for SEO.
                   </p>
