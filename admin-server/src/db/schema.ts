@@ -110,7 +110,6 @@ export const news = pgTable(
     content: text("content").notNull(),
     slug: text("slug").notNull(),
     keywords: text("keywords").array(), // optional; kept for backward compat
-    tags: text("tags").array(), // per-news tags stored as array
     metadata: text("metadata"), // per-news metadata stored as text for FTS
     isPublished: boolean("is_published").notNull().default(false),
     publishedAt: timestamp("published_at", { withTimezone: true }),
@@ -135,8 +134,7 @@ export const news = pgTable(
     ),
     index("news_event_date_idx").on(table.eventDateEn),
     index("news_reporter_idx").on(table.reporterId),
-    // GIN index on tags array for efficient array containment queries (e.g., tags @> ARRAY['tag'])
-    index("news_tags_gin_idx").using("gin", table.tags),
+
     // Full-text search GIN index on title + content + metadata
     index("news_fts_idx").using(
       "gin",
@@ -217,6 +215,44 @@ export const newsLinks = pgTable(
 );
 
 // ============================================================================
+// TAGS
+// ============================================================================
+
+export const tags = pgTable(
+  "tags",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    name: text("name").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("tags_name_idx").on(table.name),
+  ],
+);
+
+// ============================================================================
+// NEWS TAGS (M:N Join Table)
+// ============================================================================
+
+export const newsTags = pgTable(
+  "news_tags",
+  {
+    newsId: uuid("news_id")
+      .notNull()
+      .references(() => news.id, { onDelete: "cascade" }),
+    tagId: uuid("tag_id")
+      .notNull()
+      .references(() => tags.id, { onDelete: "cascade" }),
+  },
+  (table) => [
+    uniqueIndex("news_tags_pk").on(table.newsId, table.tagId),
+    index("news_tags_tag_idx").on(table.tagId),
+  ],
+);
+
+// ============================================================================
 // TYPE EXPORTS
 // ============================================================================
 
@@ -237,3 +273,9 @@ export type NewNewsMedia = typeof newsMedia.$inferInsert;
 
 export type NewsLink = typeof newsLinks.$inferSelect;
 export type NewNewsLink = typeof newsLinks.$inferInsert;
+
+export type Tag = typeof tags.$inferSelect;
+export type NewTag = typeof tags.$inferInsert;
+
+export type NewsTag = typeof newsTags.$inferSelect;
+export type NewNewsTag = typeof newsTags.$inferInsert;

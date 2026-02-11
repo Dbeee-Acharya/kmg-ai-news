@@ -1,61 +1,49 @@
 import { db } from '../db/index.js';
-import { news, newsPlatforms, newsMedia, newsLinks, type NewNews } from '../db/schema.js';
-import { eq, desc, and } from 'drizzle-orm';
+import { news, newsPlatforms, newsMedia, newsLinks, newsTags, tags, type NewNews } from '../db/schema.js';
+import { eq, desc } from 'drizzle-orm';
 import { ActivityLogService } from './activity-log-service.js';
+import { TagsService } from './tags-service.js';
 
 export class AdminNewsService {
   static async getNews(authUser: any) {
-    const filters = [];
-    if (!authUser.isSuperAdmin) {
-      filters.push(eq(news.reporterId, authUser.userId));
-    }
-    
     return await db.select()
       .from(news)
-      .where(filters.length > 0 ? and(...filters) : undefined)
       .orderBy(desc(news.createdAt));
   }
 
   static async getNewsById(id: string, authUser: any) {
-    const filters = [eq(news.id, id)];
-    if (!authUser.isSuperAdmin) {
-      filters.push(eq(news.reporterId, authUser.userId));
-    }
-
     const [record] = await db.select()
       .from(news)
-      .where(and(...filters))
+      .where(eq(news.id, id))
       .limit(1);
     if (!record) return null;
 
     const platforms = await db.select().from(newsPlatforms).where(eq(newsPlatforms.newsId, id));
     const media = await db.select().from(newsMedia).where(eq(newsMedia.newsId, id)).orderBy(newsMedia.sortOrder);
     const links = await db.select().from(newsLinks).where(eq(newsLinks.newsId, id)).orderBy(newsLinks.sortOrder);
+    const tagRows = await db.select({ name: tags.name })
+      .from(newsTags)
+      .innerJoin(tags, eq(newsTags.tagId, tags.id))
+      .where(eq(newsTags.newsId, id));
 
     return {
       ...record,
       platforms: platforms.map(p => p.platform),
       media,
       links,
-      tags: record.tags || [],
+      tags: tagRows.map(t => t.name),
       metadata: record.metadata || '',
     };
   }
 
   static async createNews(data: any, authUser: any, ip?: string, userAgent?: string) {
-    // Normalize tags to lowercase trimmed strings
-    const normalizedTags = data.tags && Array.isArray(data.tags)
-      ? data.tags.map((t: string) => t.toLowerCase().trim()).filter(Boolean)
-      : null;
-
     const result = await db.transaction(async (tx) => {
-      // 1. Insert news with tags and metadata directly
+      // 1. Insert news record
       const [inserted] = await tx.insert(news).values({
         title: data.title,
         content: data.content,
         slug: data.slug,
         keywords: data.keywords,
-        tags: normalizedTags,
         metadata: data.metadata || null,
         isPublished: data.isPublished,
         publishedAt: data.isPublished ? new Date() : null,
@@ -77,7 +65,14 @@ export class AdminNewsService {
         }
       }
 
-      // Tags and metadata are now stored directly on the news record (handled above)
+
+      // 3. Handle Tags
+      if (data.tags && Array.isArray(data.tags)) {
+        const tagIds = await TagsService.upsertMany(data.tags);
+        if (tagIds.length > 0) {
+          await tx.insert(newsTags).values(tagIds.map(tagId => ({ newsId, tagId })));
+        }
+      }
 
       // 4. Handle Media
       if (data.media && Array.isArray(data.media)) {
@@ -124,16 +119,7 @@ export class AdminNewsService {
 
   static async updateNews(id: string, data: any, authUser: any, ip?: string, userAgent?: string) {
     const updated = await db.transaction(async (tx) => {
-      // 1. Update news main record (with ownership check if not super admin)
-      const updateFilter = [eq(news.id, id)];
-      if (!authUser.isSuperAdmin) {
-        updateFilter.push(eq(news.reporterId, authUser.userId));
-      }
-
-      // Normalize tags to lowercase trimmed strings
-      const normalizedTags = data.tags && Array.isArray(data.tags)
-        ? data.tags.map((t: string) => t.toLowerCase().trim()).filter(Boolean)
-        : undefined;
+      // 1. Update news main record
 
       const [record] = await tx.update(news)
         .set({
@@ -141,7 +127,6 @@ export class AdminNewsService {
           content: data.content,
           slug: data.slug,
           keywords: data.keywords,
-          tags: normalizedTags,
           metadata: data.metadata,
           isPublished: data.isPublished,
           publishedAt: data.isPublished ? (data.publishedAt ? new Date(data.publishedAt) : new Date()) : null,
@@ -149,7 +134,7 @@ export class AdminNewsService {
           eventDateNp: data.eventDateNp,
           updatedAt: new Date(),
         })
-        .where(and(...updateFilter))
+        .where(eq(news.id, id))
         .returning();
 
       if (!record) throw new Error('News not found');
@@ -166,7 +151,15 @@ export class AdminNewsService {
         }
       }
 
-      // Tags and metadata are now stored directly on the news record (handled above)
+
+      // 3. Update Tags
+      if (data.tags && Array.isArray(data.tags)) {
+        await tx.delete(newsTags).where(eq(newsTags.newsId, id));
+        const tagIds = await TagsService.upsertMany(data.tags);
+        if (tagIds.length > 0) {
+          await tx.insert(newsTags).values(tagIds.map(tagId => ({ newsId: id, tagId })));
+        }
+      }
 
       // 4. Update Media
       if (data.media && Array.isArray(data.media)) {
@@ -214,13 +207,8 @@ export class AdminNewsService {
   }
 
   static async deleteNews(id: string, authUser: any, ip?: string, userAgent?: string) {
-    const deleteFilter = [eq(news.id, id)];
-    if (!authUser.isSuperAdmin) {
-      deleteFilter.push(eq(news.reporterId, authUser.userId));
-    }
-
     const [deleted] = await db.delete(news)
-      .where(and(...deleteFilter))
+      .where(eq(news.id, id))
       .returning();
 
     if (deleted) {

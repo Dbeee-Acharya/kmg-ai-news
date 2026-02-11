@@ -9,6 +9,7 @@ import { authRouter } from './routes/admin-auth-route.js'
 import { logsRouter } from './routes/admin-logs-route.js'
 import { newsRouter } from './routes/admin-news-route.js'
 import { uploadRouter } from './routes/admin-upload-route.js'
+import { tagsRouter } from './routes/tags-route.js'
 
 const app = new Hono<{ Variables: Variables }>()
 
@@ -28,6 +29,7 @@ app.use(
 app.route('/auth', authRouter)
 app.route('/logs', logsRouter)
 app.route('/news', newsRouter)
+app.route('/tags', tagsRouter)
 app.route('/upload', uploadRouter)
 
 app.get('/', (c: Context<{ Variables: Variables }>) => {
