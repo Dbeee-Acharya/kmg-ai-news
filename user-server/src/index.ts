@@ -19,6 +19,15 @@ const allowedOrigins = config.server.USER_FE_ORIGIN
   ? config.server.USER_FE_ORIGIN.split(",").map((origin) => origin.trim())
   : [];
 
+// Helper to resolve HTML file paths for Dev vs Production
+const getHtmlPath = (filename: string) => {
+  // Check in dist first (Production) then fallback to root (Development)
+  const distPath = path.resolve(__dirname, '../../user-fe/dist', filename);
+  const rootPath = path.resolve(__dirname, '../../user-fe', filename);
+  
+  return distPath; 
+};
+
 app.use(
   "*",
   cors({
@@ -30,7 +39,7 @@ app.use(
 
 app.get('/', async (c) => {
   try {
-    const htmlPath = path.resolve(__dirname, '../../user-fe/index.html')
+    const htmlPath = getHtmlPath('index.html')
     const html = await readFile(htmlPath, 'utf-8')
     return c.html(html)
   } catch (error) {
@@ -46,7 +55,7 @@ app.get('/n/:slug', async (c) => {
     const newsItem = await NewsService.getNewsBySlug(slug)
     
     // Use the dedicated news.html template
-    const htmlPath = path.resolve(__dirname, '../../user-fe/news.html')
+    const htmlPath = getHtmlPath('news.html')
     let html = await readFile(htmlPath, 'utf-8')
     
     if (newsItem) {
@@ -72,7 +81,7 @@ app.get('/n/:slug', async (c) => {
     console.error('OG Injection Error:', error)
     // Return original index.html if template injection fails
     try {
-      const htmlPath = path.resolve(__dirname, '../../user-fe/index.html')
+      const htmlPath = getHtmlPath('index.html')
       const html = await readFile(htmlPath, 'utf-8')
       return c.html(html)
     } catch (e) {
@@ -91,7 +100,7 @@ app.get('*', async (c) => {
   }
   
   try {
-    const htmlPath = path.resolve(__dirname, '../../user-fe/index.html')
+    const htmlPath = getHtmlPath('index.html')
     const html = await readFile(htmlPath, 'utf-8')
     return c.html(html)
   } catch (error) {

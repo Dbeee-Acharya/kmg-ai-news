@@ -18,6 +18,14 @@ export default defineConfig({
     viteReact(),
     tailwindcss(),
   ],
+  build: {
+    rollupOptions: {
+      input: {
+        main: fileURLToPath(new URL('./index.html', import.meta.url)),
+        news: fileURLToPath(new URL('./news.html', import.meta.url)),
+      },
+    },
+  },
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
