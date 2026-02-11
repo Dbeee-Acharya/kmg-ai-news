@@ -1,5 +1,5 @@
 {
-  "id": "56495ab0-a9a5-49c5-8f8c-4ca4b9fc1aad",
+  "id": "50496f69-82f0-432b-a7b2-522f0d7cfc55",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -191,6 +191,12 @@
         },
         "event_date_np": {
           "name": "event_date_np",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "og_image": {
+          "name": "og_image",
           "type": "text",
           "primaryKey": false,
           "notNull": false

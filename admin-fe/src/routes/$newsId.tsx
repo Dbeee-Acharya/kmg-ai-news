@@ -39,7 +39,15 @@ function NewsDetailComponent() {
   const { newsId } = Route.useParams()
   const { isAuthenticated, isLoading: isAuthLoading } = useAuth()
   const navigate = useNavigate()
-  const { useNewsItemQuery, createNews, updateNews, uploadMedia, isUploading } = useNewsQuery()
+  const { 
+    useNewsItemQuery, 
+    createNews, 
+    updateNews, 
+    uploadMedia, 
+    isUploading,
+    uploadOgImage,
+    isUploadingOgImage
+  } = useNewsQuery()
   const { tags: allTags, isLoading: isTagsLoading } = useTagsQuery()
   const { reporters: allReporters, isLoading: isReportersLoading } = useReportersQuery()
   
@@ -59,6 +67,7 @@ function NewsDetailComponent() {
     authors: [],
     media: [],
     links: [],
+    ogImage: '',
   })
 
   const [newKeyword, setNewKeyword] = useState('')
@@ -78,6 +87,7 @@ function NewsDetailComponent() {
         authors: newsData.authors?.map((a: any) => a.userId) || [],
         media: newsData.media || [],
         links: newsData.links || [],
+        ogImage: newsData.ogImage || '',
       })
       // Disable auto-slug on existing news to prevent accidental breaks
       setIsAutoSlug(false)
@@ -169,6 +179,24 @@ function NewsDetailComponent() {
       toast.success('Image uploaded successfully')
     } catch (error: any) {
       toast.error(error.response?.data?.error || 'Upload failed')
+    }
+  }
+
+  const handleOgImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    if (file.size > 500 * 1024) {
+      toast.error('OG image must be under 500KB')
+      return
+    }
+
+    try {
+      const result = await uploadOgImage({ newsId, file })
+      setFormData((prev: any) => ({ ...prev, ogImage: result.url }))
+      toast.success('OG image uploaded successfully')
+    } catch (error: any) {
+      toast.error(error.response?.data?.error || 'OG image upload failed')
     }
   }
 
@@ -550,6 +578,63 @@ function NewsDetailComponent() {
                   </div>
                   <p className="text-sm text-muted-foreground">
                     Draft news will not be visible on the public website.
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Open Graph (OG) Image</CardTitle>
+                  <CardDescription>Upload a custom image for social media sharing (Max 500KB).</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {formData.ogImage ? (
+                    <div className="relative aspect-video w-full max-w-sm rounded-lg overflow-hidden border bg-muted group">
+                      <img src={formData.ogImage} alt="OG" className="object-cover w-full h-full" />
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                        <div className="relative">
+                          <Button size="sm" variant="secondary" disabled={isUploadingOgImage}>
+                            {isUploadingOgImage ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <ImageIcon className="w-4 h-4 mr-2" />}
+                            Change
+                          </Button>
+                          <input 
+                            type="file" 
+                            className="absolute inset-0 opacity-0 cursor-pointer" 
+                            onChange={handleOgImageUpload}
+                            accept="image/*"
+                            disabled={isUploadingOgImage}
+                          />
+                        </div>
+                        <Button size="sm" variant="destructive" onClick={() => setFormData({...formData, ogImage: ''})}>
+                          <Trash2 className="w-4 h-4 mr-2" />
+                          Remove
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="relative">
+                      <Button 
+                        type="button" 
+                        variant="outline" 
+                        className="w-full h-32 border-2 border-dashed flex flex-col gap-2" 
+                        disabled={isUploadingOgImage || !isEdit}
+                      >
+                        {isUploadingOgImage ? <Loader2 className="w-6 h-6 animate-spin" /> : <Plus className="w-6 h-6" />}
+                        <span>{!isEdit ? 'Save news first to upload OG Image' : isUploadingOgImage ? 'Uploading...' : 'Upload OG Image'}</span>
+                      </Button>
+                      {isEdit && (
+                        <input 
+                          type="file" 
+                          className="absolute inset-0 opacity-0 cursor-pointer" 
+                          onChange={handleOgImageUpload}
+                          accept="image/*"
+                          disabled={isUploadingOgImage}
+                        />
+                      )}
+                    </div>
+                  )}
+                  <p className="text-[10px] text-muted-foreground">
+                    Recommended size: 1200x630px. Only JPG, PNG, and WebP are allowed.
                   </p>
                 </CardContent>
               </Card>

@@ -45,4 +45,12 @@ export const newsApi = {
     const { data } = await api.delete(`/news/${newsId}/authors/${userId}`);
     return data;
   },
+  uploadOgImage: async (newsId: string, file: File) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    const { data } = await api.post(`/news/${newsId}/og-image`, formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+    return data;
+  },
 };

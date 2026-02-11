@@ -64,6 +64,14 @@ export const useNewsQuery = (filters: NewsFilterParams = {}) => {
     },
   });
 
+  const uploadOgImageMutation = useMutation({
+    mutationFn: ({ newsId, file }: { newsId: string; file: File }) =>
+      newsApi.uploadOgImage(newsId, file),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["news"] });
+    },
+  });
+
   return {
     newsData: newsQuery.data,
     news: newsQuery.data?.data,
@@ -80,5 +88,7 @@ export const useNewsQuery = (filters: NewsFilterParams = {}) => {
     isUploading: uploadMutation.isPending,
     addAuthor: addAuthorMutation.mutateAsync,
     removeAuthor: removeAuthorMutation.mutateAsync,
+    uploadOgImage: uploadOgImageMutation.mutateAsync,
+    isUploadingOgImage: uploadOgImageMutation.isPending,
   };
 };

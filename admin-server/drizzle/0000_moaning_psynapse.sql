@@ -23,6 +23,7 @@ CREATE TABLE "news" (
 	"published_at" timestamp with time zone,
 	"event_date_en" date,
 	"event_date_np" text,
+	"og_image" text,
 	"reporter_id" uuid,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL

@@ -113,6 +113,7 @@ export class AdminNewsService {
         publishedAt: data.isPublished ? new Date() : null,
         eventDateEn: data.eventDateEn ? new Date(data.eventDateEn).toISOString().split('T')[0] : null,
         eventDateNp: data.eventDateNp,
+        ogImage: data.ogImage || null,
         reporterId: authUser.userId === 'super-admin-uuid' ? null : authUser.userId,
       }).returning();
 
@@ -210,6 +211,7 @@ export class AdminNewsService {
           publishedAt: data.isPublished ? (data.publishedAt ? new Date(data.publishedAt) : new Date()) : null,
           eventDateEn: data.eventDateEn ? new Date(data.eventDateEn).toISOString().split('T')[0] : null,
           eventDateNp: data.eventDateNp,
+          ogImage: data.ogImage !== undefined ? (data.ogImage || null) : undefined,
           updatedAt: new Date(),
         })
         .where(eq(news.id, id))
