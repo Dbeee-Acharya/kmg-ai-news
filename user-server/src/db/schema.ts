@@ -84,6 +84,7 @@ export const news = pgTable(
     publishedAt: timestamp("published_at", { withTimezone: true }),
     eventDateEn: date("event_date_en"), // English date
     eventDateNp: text("event_date_np"), // Nepali date string for display only
+    ogImage: text("og_image"), // Open Graph image URL
     reporterId: uuid("reporter_id").references(() => users.id, {
       onDelete: "set null",
     }),

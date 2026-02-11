@@ -190,6 +190,7 @@ export class NewsService {
       publishedAt: news.publishedAt,
       eventDateEn: news.eventDateEn,
       eventDateNp: news.eventDateNp,
+      ogImage: news.ogImage,
     })
     .from(news)
     .where(and(eq(news.slug, slug), eq(news.isPublished, true)))
@@ -247,6 +248,7 @@ export class NewsService {
       eventDateNp: record.eventDateNp,
       media,
       links,
+      ogImage: record.ogImage,
     };
 
     await cacheService.set(cacheKey, finalResponse, CACHE_TTL);

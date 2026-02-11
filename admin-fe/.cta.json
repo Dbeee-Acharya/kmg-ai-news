@@ -1,5 +1,5 @@
 {
-  "projectName": "admin-fe",
+  "projectName": "Kantipur - Factchecker Admin",
   "mode": "file-router",
   "typescript": true,
   "packageManager": "pnpm",

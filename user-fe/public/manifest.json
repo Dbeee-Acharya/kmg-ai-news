@@ -1,6 +1,6 @@
 {
-  "short_name": "KMG News Fact Check - ADMIN",
-  "name": "Fact Check - eKantipur",
+  "short_name": "factchecker_kantipur",
+  "name": "Kantipur | Fact Checker",
   "icons": [
     {
       "src": "favicon.ico",
