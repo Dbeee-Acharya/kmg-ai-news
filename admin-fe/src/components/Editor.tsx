@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Underline from '@tiptap/extension-underline'
@@ -50,6 +51,13 @@ export function Editor({ value, onChange, placeholder = 'Write something...' }: 
       },
     },
   })
+
+  // Sync content from external value changes
+  useEffect(() => {
+    if (editor && value !== editor.getHTML()) {
+      editor.commands.setContent(value)
+    }
+  }, [value, editor])
 
   if (!editor) {
     return null

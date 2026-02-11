@@ -125,7 +125,7 @@ export default function Header() {
             onClick={() => setIsOpen(false)}
             className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-800 transition-all font-medium text-gray-400 hover:text-white group"
             activeProps={{
-              className: 'flex items-center gap-3 p-3 rounded-xl bg-primary/10 text-primary transition-all font-semibold',
+              className: 'flex items-center gap-3 text-white p-3 bg-gray-800 rounded-xl transition-all font-semibold',
             }}
           >
             <Home size={20} className="group-hover:scale-110 transition-transform" />
@@ -139,7 +139,7 @@ export default function Header() {
                 onClick={() => setIsOpen(false)}
                 className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-800 transition-all font-medium text-gray-400 hover:text-white group"
                 activeProps={{
-                  className: 'flex items-center gap-3 p-3 rounded-xl bg-primary/10 text-primary transition-all font-semibold',
+                  className: 'flex items-center gap-3 text-white p-3 rounded-xl transition-all font-semibold',
                 }}
               >
                 <User size={20} className="group-hover:scale-110 transition-transform" />
@@ -150,7 +150,7 @@ export default function Header() {
                 onClick={() => setIsOpen(false)}
                 className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-800 transition-all font-medium text-gray-400 hover:text-white group"
                 activeProps={{
-                  className: 'flex items-center gap-3 p-3 rounded-xl bg-primary/10 text-primary transition-all font-semibold',
+                  className: 'flex items-center gap-3 text-white p-3 rounded-xl transition-all font-semibold',
                 }}
               >
                 <History size={20} className="group-hover:scale-110 transition-transform" />
@@ -161,7 +161,7 @@ export default function Header() {
                 onClick={() => setIsOpen(false)}
                 className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-800 transition-all font-medium text-gray-400 hover:text-white group"
                 activeProps={{
-                  className: 'flex items-center gap-3 p-3 rounded-xl bg-primary/10 text-primary transition-all font-semibold',
+                  className: 'flex items-center gap-3 text-white p-3 rounded-xl transition-all font-semibold',
                 }}
               >
                 <Tag size={20} className="group-hover:scale-110 transition-transform" />

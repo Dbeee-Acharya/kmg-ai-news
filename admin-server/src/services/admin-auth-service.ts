@@ -4,6 +4,7 @@ import { db } from '../db/index.js';
 import { users, type NewUser } from '../db/schema.js';
 import { eq, desc } from 'drizzle-orm';
 import { config } from '../config/config.js';
+import { ActivityLogService } from './activity-log-service.js';
 
 export interface AuthPayload {
   userId: string;
@@ -59,7 +60,7 @@ export class AdminAuthService {
     }
   }
 
-  static async createReporter(data: { name: string; email: string; password: string; portfolioLink?: string }) {
+  static async createReporter(data: { name: string; email: string; password: string; portfolioLink?: string }, authUser?: any, ip?: string, userAgent?: string) {
     const passwordHash = await bcrypt.hash(data.password, 10);
     
     const newUser: NewUser = {
@@ -70,6 +71,19 @@ export class AdminAuthService {
     };
 
     const [inserted] = await db.insert(users).values(newUser).returning();
+
+    if (authUser) {
+      await ActivityLogService.log({
+        userId: authUser.userId,
+        action: 'user.create',
+        entityType: 'users',
+        entityId: inserted.id,
+        metadata: { name: inserted.name, email: inserted.email },
+        ip,
+        userAgent,
+      });
+    }
+
     return inserted;
   }
 
@@ -94,7 +108,7 @@ export class AdminAuthService {
     return user || null;
   }
 
-  static async updateUser(id: string, data: { name?: string; email?: string; password?: string; portfolioLink?: string }) {
+  static async updateUser(id: string, data: { name?: string; email?: string; password?: string; portfolioLink?: string }, authUser?: any, ip?: string, userAgent?: string) {
     const updateData: any = {
       name: data.name,
       email: data.email,
@@ -111,11 +125,36 @@ export class AdminAuthService {
       .where(eq(users.id, id))
       .returning();
     
+    if (updated && authUser) {
+      await ActivityLogService.log({
+        userId: authUser.userId,
+        action: 'user.update',
+        entityType: 'users',
+        entityId: updated.id,
+        metadata: { name: updated.name, email: updated.email },
+        ip,
+        userAgent,
+      });
+    }
+    
     return updated;
   }
 
-  static async deleteUser(id: string) {
+  static async deleteUser(id: string, authUser?: any, ip?: string, userAgent?: string) {
     const [deleted] = await db.delete(users).where(eq(users.id, id)).returning();
+
+    if (deleted && authUser) {
+      await ActivityLogService.log({
+        userId: authUser.userId,
+        action: 'user.delete',
+        entityType: 'users',
+        entityId: deleted.id,
+        metadata: { name: deleted.name, email: deleted.email },
+        ip,
+        userAgent,
+      });
+    }
+
     return deleted;
   }
 }

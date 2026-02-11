@@ -2,8 +2,10 @@ import { useAuth } from '../context/AuthContext'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useEffect, useState } from 'react'
 import { useNewsQuery } from '../query/useNewsQuery'
+import { useTagsQuery } from '../query/useTagsQuery'
 import { Button } from '../components/ui/button'
 import { Input } from '../components/ui/input'
+import { MultiSelect } from '../components/ui/multi-select'
 import { Editor } from '../components/Editor'
 import { Label } from '../components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/card'
@@ -23,8 +25,7 @@ import {
   Loader2,
   X,
   Globe,
-  RefreshCw,
-  Tag as TagIcon
+  RefreshCw
 } from 'lucide-react'
 
 import { slugify } from 'transliteration'
@@ -38,6 +39,7 @@ function NewsDetailComponent() {
   const { isAuthenticated, isLoading: isAuthLoading } = useAuth()
   const navigate = useNavigate()
   const { useNewsItemQuery, createNews, updateNews, uploadMedia, isUploading } = useNewsQuery()
+  const { tags: allTags, isLoading: isTagsLoading } = useTagsQuery()
   
   const isEdit = newsId !== 'add-news'
   const { data: newsData, isLoading: isDataLoading } = useNewsItemQuery(newsId)
@@ -56,7 +58,6 @@ function NewsDetailComponent() {
     links: [],
   })
 
-  const [newTag, setNewTag] = useState('')
   const [newKeyword, setNewKeyword] = useState('')
   const [isSaving, setIsSaving] = useState(false)
   const [isAutoSlug, setIsAutoSlug] = useState(!isEdit)
@@ -100,24 +101,7 @@ function NewsDetailComponent() {
     }))
   }
 
-  const addTag = () => {
-    if (formData.tags.length >= 3) {
-      toast.warning('Maximum 3 tags allowed')
-      return
-    }
-    const tag = newTag.trim()
-    if (tag && !formData.tags.includes(tag)) {
-      setFormData((prev: any) => ({ ...prev, tags: [...prev.tags, tag] }))
-      setNewTag('')
-    }
-  }
 
-  const removeTag = (tag: string) => {
-    setFormData((prev: any) => ({
-      ...prev,
-      tags: prev.tags.filter((t: string) => t !== tag),
-    }))
-  }
 
   const addKeyword = () => {
     if (formData.keywords.length >= 5) {
@@ -569,28 +553,21 @@ function NewsDetailComponent() {
                   <CardDescription>Organize your story and optimize for search.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                  <div className="space-y-2">
-                    <Label>Tags</Label>
-                    <div className="flex gap-2">
-                      <Input 
-                        placeholder="Add a tag..." 
-                        value={newTag} 
-                        onChange={(e) => setNewTag(e.target.value)}
-                        onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addTag())}
-                      />
-                      <Button type="button" variant="secondary" onClick={addTag}><Plus className="w-4 h-4" /></Button>
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <Label>Tags</Label>
+                      <Badge variant="outline" className="text-[10px] font-normal">
+                        {formData.tags.length} / 5 selected
+                      </Badge>
                     </div>
-                    <div className="flex flex-wrap gap-2 mt-2">
-                      {formData.tags.map((tag: string) => (
-                        <Badge key={tag} className="gap-1 pl-2">
-                          <TagIcon className="w-3 h-3" />
-                          {tag}
-                          <button type="button" onClick={() => removeTag(tag)} className="ml-1 hover:text-red-400">
-                            <X className="w-3 h-3" />
-                          </button>
-                        </Badge>
-                      ))}
-                    </div>
+                    
+                    <MultiSelect
+                      options={allTags || []}
+                      selected={formData.tags}
+                      onChange={(tags) => setFormData((prev: any) => ({ ...prev, tags }))}
+                      placeholder={isTagsLoading ? "Loading tags..." : "Select tags..."}
+                      maxItems={5}
+                    />
                   </div>
 
                   <Separator />

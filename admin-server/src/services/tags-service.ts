@@ -1,13 +1,14 @@
 import { db } from '../db/index.js';
 import { tags } from '../db/schema.js';
 import { eq, asc } from 'drizzle-orm';
+import { ActivityLogService } from './activity-log-service.js';
 
 export class TagsService {
   static async getAll() {
     return await db.select().from(tags).orderBy(asc(tags.name));
   }
 
-  static async create(name: string) {
+  static async create(name: string, authUser?: any, ip?: string, userAgent?: string) {
     const normalized = name.toLowerCase().trim();
     if (!normalized) throw new Error('Tag name is required');
 
@@ -16,11 +17,37 @@ export class TagsService {
     if (existing) return existing;
 
     const [inserted] = await db.insert(tags).values({ name: normalized }).returning();
+
+    if (authUser) {
+      await ActivityLogService.log({
+        userId: authUser.userId,
+        action: 'tags.create',
+        entityType: 'tags',
+        entityId: inserted.id,
+        metadata: { name: inserted.name },
+        ip,
+        userAgent,
+      });
+    }
+
     return inserted;
   }
 
-  static async delete(id: string) {
+  static async delete(id: string, authUser?: any, ip?: string, userAgent?: string) {
     const [deleted] = await db.delete(tags).where(eq(tags.id, id)).returning();
+    
+    if (deleted && authUser) {
+      await ActivityLogService.log({
+        userId: authUser.userId,
+        action: 'tags.delete',
+        entityType: 'tags',
+        entityId: deleted.id,
+        metadata: { name: deleted.name },
+        ip,
+        userAgent,
+      });
+    }
+
     return deleted;
   }
 

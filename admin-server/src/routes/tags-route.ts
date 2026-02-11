@@ -18,8 +18,11 @@ tagsRouter.get('/', async (c) => {
 
 tagsRouter.post('/', async (c) => {
   const { name } = await c.req.json();
+  const user = c.get('user');
+  const ip = c.req.header('x-forwarded-for') || '';
+  const userAgent = c.req.header('user-agent') || '';
   try {
-    const res = await TagsService.create(name);
+    const res = await TagsService.create(name, user, ip, userAgent);
     return c.json(res, 201);
   } catch (error: any) {
     return c.json({ error: error.message }, 400);
@@ -28,8 +31,11 @@ tagsRouter.post('/', async (c) => {
 
 tagsRouter.delete('/:id', async (c) => {
   const id = c.req.param('id');
+  const user = c.get('user');
+  const ip = c.req.header('x-forwarded-for') || '';
+  const userAgent = c.req.header('user-agent') || '';
   try {
-    const res = await TagsService.delete(id);
+    const res = await TagsService.delete(id, user, ip, userAgent);
     if (!res) return c.json({ error: 'Tag not found' }, 404);
     return c.json({ message: 'Tag deleted', id: res.id });
   } catch (error: any) {
