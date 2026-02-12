@@ -42,3 +42,24 @@ if (rootElement && !rootElement.innerHTML) {
     </StrictMode>,
   )
 }
+
+// Recover once from stale chunk URLs after deploys (cached HTML/entrypoint).
+window.addEventListener('vite:preloadError', () => {
+  const key = 'kmg:chunk-reload'
+  if (!sessionStorage.getItem(key)) {
+    sessionStorage.setItem(key, '1')
+    window.location.reload()
+  }
+})
+
+window.addEventListener('error', (event) => {
+  const key = 'kmg:chunk-reload'
+  const message = event.message || ''
+  if (
+    message.includes('Failed to fetch dynamically imported module') &&
+    !sessionStorage.getItem(key)
+  ) {
+    sessionStorage.setItem(key, '1')
+    window.location.reload()
+  }
+})

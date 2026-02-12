@@ -88,6 +88,7 @@ app.get("/", async (c) => {
   try {
     const htmlPath = getHtmlPath("index.html");
     const html = await readFile(htmlPath, "utf-8");
+    c.header("Cache-Control", "no-store");
     return c.html(html);
   } catch (error) {
     return c.text("User Server API is running");
@@ -197,6 +198,7 @@ app.get("*", async (c) => {
   try {
     const htmlPath = getHtmlPath("index.html");
     const html = await readFile(htmlPath, "utf-8");
+    c.header("Cache-Control", "no-store");
     return c.html(html);
   } catch (error) {
     return c.notFound();
