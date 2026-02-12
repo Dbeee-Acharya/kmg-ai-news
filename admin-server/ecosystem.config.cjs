@@ -2,7 +2,7 @@ module.exports = {
   apps: [
     {
       name: "fact-checker-admin:server",
-      script: "./dist/index.js",
+      script: "./dist/src/index.js",
 
       max_memory_restart: "500M",
       exec_mode: "fork",
