@@ -20,6 +20,14 @@ This will generate two entry points in the `dist/` folder:
 - `index.html`: The main entry point for the homepage and general SPA routes.
 - `news.html`: A specialized template used by the `user-server` for dynamic Open Graph (OG) tag injection.
 
+## Production Reliability Checklist (OG Images)
+
+- Build and deploy `dist/news.html` alongside `dist/index.html`. The `user-server` only reads from `dist/` in production.
+- Ensure `/n/:slug` requests are always proxied to `user-server` (not served as static files).
+- Make sure `ogImage` or the first `media.url` stored in the DB is a fully qualified URL (e.g. `https://...`). Many crawlers ignore relative OG image URLs.
+- Set `USER_FE_ORIGIN` on the `user-server` to the public HTTPS origin (e.g. `https://factchecker.ekantipur.com`). This is used for CORS and sitemap base URLs.
+- Serve the site over HTTPS. Some crawlers will not display OG images from insecure origins.
+
 ## Nginx Deployment (Recommended)
 
 To support **Dynamic OG Tags** and **SEO Injection**, your Nginx configuration must proxy page requests to the `user-server` while serving static assets directly.
@@ -60,3 +68,11 @@ server {
 - **Messaging Apps (WhatsApp/FB)**: When a link is shared, the `user-server` intercepts the request, queries the DB, and injects the dynamic title/image into the `news.html` template.
 - **Performance**: Nginx handles the heavy lifting of serving static JS and CSS files directly without hitting the Node.js process.
 - **SPA Fallback**: The server is already configured to serve `index.html` for all unknown routes, ensuring your React Router works perfectly on refreshes.
+
+## VPS Setup (Required for Reliable OG)
+
+1. Build the frontend and deploy the `dist/` folder to your VPS.
+2. Run `user-server` on the VPS (e.g. systemd or PM2) so it can serve `/n/:slug` with injected OG tags.
+3. Set `user-server` environment variables: `PORT=4000` and `USER_FE_ORIGIN=https://factchecker.ekantipur.com`.
+4. Point Nginx to `dist/` for static assets and proxy all other paths to `user-server` (see config above).
+5. Ensure the `ogImage` field (or first media URL) in your DB is a fully qualified HTTPS URL.

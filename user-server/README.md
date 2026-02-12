@@ -1,8 +1,8 @@
-```
-npm install
-npm run dev
+```bash
+pnpm install --frozen-lockfile
+pnpm build
 ```
 
-```
-open http://localhost:3000
+```bash
+pm2 start ecosystem.config.cjs
 ```
