@@ -74,11 +74,11 @@ export default function Header() {
                     <DropdownMenuItem asChild>
                       <Link to="/logs" className="cursor-pointer w-full">Activity Logs</Link>
                     </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link to="/tags" className="cursor-pointer w-full">Tags Management</Link>
-                    </DropdownMenuItem>
                   </>
                 )}
+                <DropdownMenuItem asChild>
+                  <Link to="/tags" className="cursor-pointer w-full">Tags Management</Link>
+                </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem 
                   className="text-red-500 focus:text-red-500 cursor-pointer"
@@ -156,19 +156,19 @@ export default function Header() {
                 <History size={20} className="group-hover:scale-110 transition-transform" />
                 <span>Activity Logs</span>
               </Link>
-              <Link
-                to="/tags"
-                onClick={() => setIsOpen(false)}
-                className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-800 transition-all font-medium text-gray-400 hover:text-white group"
-                activeProps={{
-                  className: 'flex items-center gap-3 text-white p-3 rounded-xl transition-all font-semibold',
-                }}
-              >
-                <Tag size={20} className="group-hover:scale-110 transition-transform" />
-                <span>Tags Management</span>
-              </Link>
             </>
           )}
+          <Link
+            to="/tags"
+            onClick={() => setIsOpen(false)}
+            className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-800 transition-all font-medium text-gray-400 hover:text-white group"
+            activeProps={{
+              className: 'flex items-center gap-3 text-white p-3 rounded-xl transition-all font-semibold',
+            }}
+          >
+            <Tag size={20} className="group-hover:scale-110 transition-transform" />
+            <span>Tags Management</span>
+          </Link>
         </nav>
 
         <div className="p-4 border-t border-gray-800 bg-gray-900/50">
