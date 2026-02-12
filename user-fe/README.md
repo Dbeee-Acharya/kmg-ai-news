@@ -12,6 +12,7 @@ pnpm dev
 ## Production Build
 
 ```bash
+pnpm i --frozen-lockfile
 pnpm build
 ```
 
