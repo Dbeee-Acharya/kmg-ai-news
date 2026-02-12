@@ -1,8 +1,29 @@
-import { db } from '../db/index.js';
-import { news, newsPlatforms, newsMedia, newsLinks, newsTags, tags, newsAuthors, users, type NewNews } from '../db/schema.js';
-import { eq, desc, asc, gte, lte, inArray, and, sql, count, countDistinct } from 'drizzle-orm';
-import { ActivityLogService } from './activity-log-service.js';
-import { TagsService } from './tags-service.js';
+import { db } from "../db/index.js";
+import {
+  news,
+  newsPlatforms,
+  newsMedia,
+  newsLinks,
+  newsTags,
+  tags,
+  newsAuthors,
+  users,
+  type NewNews,
+} from "../db/schema.js";
+import {
+  eq,
+  desc,
+  asc,
+  gte,
+  lte,
+  inArray,
+  and,
+  sql,
+  count,
+  countDistinct,
+} from "drizzle-orm";
+import { ActivityLogService } from "./activity-log-service.js";
+import { TagsService } from "./tags-service.js";
 
 export interface NewsFilterParams {
   page?: number;
@@ -10,15 +31,49 @@ export interface NewsFilterParams {
   startDate?: string;
   endDate?: string;
   tags?: string[];
-  sortOrder?: 'asc' | 'desc';
+  sortOrder?: "asc" | "desc";
 }
+
+const isAbsoluteHttpUrl = (value: string) => /^https?:\/\/\S+$/i.test(value);
+
+const sanitizeOgImageForCreate = (value: unknown): string | null => {
+  if (value === undefined || value === null) return null;
+  if (typeof value !== "string") {
+    throw new Error("ogImage must be a string URL");
+  }
+
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  if (!isAbsoluteHttpUrl(trimmed)) {
+    throw new Error("ogImage must be a fully qualified URL (https://...)");
+  }
+  return trimmed;
+};
+
+const sanitizeOgImageForUpdate = (
+  value: unknown,
+): string | null | undefined => {
+  if (value === undefined) return undefined;
+  if (value === null) return null;
+  if (typeof value !== "string") {
+    throw new Error("ogImage must be a string URL");
+  }
+
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  if (!isAbsoluteHttpUrl(trimmed)) {
+    throw new Error("ogImage must be a fully qualified URL (https://...)");
+  }
+  return trimmed;
+};
 
 export class AdminNewsService {
   static async getNews(authUser: any, filters: NewsFilterParams = {}) {
     const page = Math.max(1, filters.page || 1);
     const limit = Math.min(100, Math.max(1, filters.limit || 20));
     const offset = (page - 1) * limit;
-    const order = filters.sortOrder === 'asc' ? asc(news.createdAt) : desc(news.createdAt);
+    const order =
+      filters.sortOrder === "asc" ? asc(news.createdAt) : desc(news.createdAt);
 
     // Build WHERE conditions
     const conditions: any[] = [];
@@ -71,51 +126,80 @@ export class AdminNewsService {
   }
 
   static async getNewsById(id: string, authUser: any) {
-    const [record] = await db.select()
+    const [record] = await db
+      .select()
       .from(news)
       .where(eq(news.id, id))
       .limit(1);
     if (!record) return null;
 
-    const platforms = await db.select().from(newsPlatforms).where(eq(newsPlatforms.newsId, id));
-    const media = await db.select().from(newsMedia).where(eq(newsMedia.newsId, id)).orderBy(newsMedia.sortOrder);
-    const links = await db.select().from(newsLinks).where(eq(newsLinks.newsId, id)).orderBy(newsLinks.sortOrder);
-    const tagRows = await db.select({ name: tags.name })
+    const platforms = await db
+      .select()
+      .from(newsPlatforms)
+      .where(eq(newsPlatforms.newsId, id));
+    const media = await db
+      .select()
+      .from(newsMedia)
+      .where(eq(newsMedia.newsId, id))
+      .orderBy(newsMedia.sortOrder);
+    const links = await db
+      .select()
+      .from(newsLinks)
+      .where(eq(newsLinks.newsId, id))
+      .orderBy(newsLinks.sortOrder);
+    const tagRows = await db
+      .select({ name: tags.name })
       .from(newsTags)
       .innerJoin(tags, eq(newsTags.tagId, tags.id))
       .where(eq(newsTags.newsId, id));
-    const authorRows = await db.select({ userId: newsAuthors.userId, name: users.name, email: users.email })
+    const authorRows = await db
+      .select({
+        userId: newsAuthors.userId,
+        name: users.name,
+        email: users.email,
+      })
       .from(newsAuthors)
       .innerJoin(users, eq(newsAuthors.userId, users.id))
       .where(eq(newsAuthors.newsId, id));
 
     return {
       ...record,
-      platforms: platforms.map(p => p.platform),
+      platforms: platforms.map((p) => p.platform),
       media,
       links,
-      tags: tagRows.map(t => t.name),
+      tags: tagRows.map((t) => t.name),
       authors: authorRows,
-      metadata: record.metadata || '',
+      metadata: record.metadata || "",
     };
   }
 
-  static async createNews(data: any, authUser: any, ip?: string, userAgent?: string) {
+  static async createNews(
+    data: any,
+    authUser: any,
+    ip?: string,
+    userAgent?: string,
+  ) {
     const result = await db.transaction(async (tx) => {
       // 1. Insert news record
-      const [inserted] = await tx.insert(news).values({
-        title: data.title,
-        content: data.content,
-        slug: data.slug,
-        keywords: data.keywords,
-        metadata: data.metadata || null,
-        isPublished: data.isPublished,
-        publishedAt: data.isPublished ? new Date() : null,
-        eventDateEn: data.eventDateEn ? new Date(data.eventDateEn).toISOString().split('T')[0] : null,
-        eventDateNp: data.eventDateNp,
-        ogImage: data.ogImage || null,
-        reporterId: authUser.userId === 'super-admin-uuid' ? null : authUser.userId,
-      }).returning();
+      const [inserted] = await tx
+        .insert(news)
+        .values({
+          title: data.title,
+          content: data.content,
+          slug: data.slug,
+          keywords: data.keywords,
+          metadata: data.metadata || null,
+          isPublished: data.isPublished,
+          publishedAt: data.isPublished ? new Date() : null,
+          eventDateEn: data.eventDateEn
+            ? new Date(data.eventDateEn).toISOString().split("T")[0]
+            : null,
+          eventDateNp: data.eventDateNp,
+          ogImage: sanitizeOgImageForCreate(data.ogImage),
+          reporterId:
+            authUser.userId === "super-admin-uuid" ? null : authUser.userId,
+        })
+        .returning();
 
       const newsId = inserted.id;
 
@@ -130,12 +214,13 @@ export class AdminNewsService {
         }
       }
 
-
       // 3. Handle Tags
       if (data.tags && Array.isArray(data.tags)) {
         const tagIds = await TagsService.upsertMany(data.tags);
         if (tagIds.length > 0) {
-          await tx.insert(newsTags).values(tagIds.map(tagId => ({ newsId, tagId })));
+          await tx
+            .insert(newsTags)
+            .values(tagIds.map((tagId) => ({ newsId, tagId })));
         }
       }
 
@@ -145,7 +230,7 @@ export class AdminNewsService {
           newsId,
           type: m.type,
           url: m.url,
-          sortOrder: m.sortOrder || (index + 1),
+          sortOrder: m.sortOrder || index + 1,
         }));
         if (mediaData.length > 0) {
           await tx.insert(newsMedia).values(mediaData);
@@ -158,7 +243,7 @@ export class AdminNewsService {
           newsId,
           label: l.label,
           url: l.url,
-          sortOrder: l.sortOrder || (index + 1),
+          sortOrder: l.sortOrder || index + 1,
         }));
         if (linksData.length > 0) {
           await tx.insert(newsLinks).values(linksData);
@@ -167,23 +252,25 @@ export class AdminNewsService {
 
       // 6. Handle Authors — auto-add creator + any extras
       const authorUserIds = new Set<string>();
-      if (authUser.userId && authUser.userId !== 'super-admin-uuid') {
+      if (authUser.userId && authUser.userId !== "super-admin-uuid") {
         authorUserIds.add(authUser.userId);
       }
       if (data.authors && Array.isArray(data.authors)) {
         data.authors.forEach((id: string) => authorUserIds.add(id));
       }
       if (authorUserIds.size > 0) {
-        await tx.insert(newsAuthors).values(
-          Array.from(authorUserIds).map(userId => ({ newsId, userId }))
-        );
+        await tx
+          .insert(newsAuthors)
+          .values(
+            Array.from(authorUserIds).map((userId) => ({ newsId, userId })),
+          );
       }
 
       // Log activity
       await ActivityLogService.log({
         userId: authUser.userId,
-        action: 'news.create',
-        entityType: 'news',
+        action: "news.create",
+        entityType: "news",
         entityId: newsId,
         metadata: { title: inserted.title },
         ip,
@@ -196,11 +283,18 @@ export class AdminNewsService {
     return result;
   }
 
-  static async updateNews(id: string, data: any, authUser: any, ip?: string, userAgent?: string) {
+  static async updateNews(
+    id: string,
+    data: any,
+    authUser: any,
+    ip?: string,
+    userAgent?: string,
+  ) {
     const updated = await db.transaction(async (tx) => {
       // 1. Update news main record
 
-      const [record] = await tx.update(news)
+      const [record] = await tx
+        .update(news)
         .set({
           title: data.title,
           content: data.content,
@@ -208,16 +302,22 @@ export class AdminNewsService {
           keywords: data.keywords,
           metadata: data.metadata,
           isPublished: data.isPublished,
-          publishedAt: data.isPublished ? (data.publishedAt ? new Date(data.publishedAt) : new Date()) : null,
-          eventDateEn: data.eventDateEn ? new Date(data.eventDateEn).toISOString().split('T')[0] : null,
+          publishedAt: data.isPublished
+            ? data.publishedAt
+              ? new Date(data.publishedAt)
+              : new Date()
+            : null,
+          eventDateEn: data.eventDateEn
+            ? new Date(data.eventDateEn).toISOString().split("T")[0]
+            : null,
           eventDateNp: data.eventDateNp,
-          ogImage: data.ogImage !== undefined ? (data.ogImage || null) : undefined,
+          ogImage: sanitizeOgImageForUpdate(data.ogImage),
           updatedAt: new Date(),
         })
         .where(eq(news.id, id))
         .returning();
 
-      if (!record) throw new Error('News not found');
+      if (!record) throw new Error("News not found");
 
       // 2. Update Platforms
       if (data.platforms && Array.isArray(data.platforms)) {
@@ -231,13 +331,14 @@ export class AdminNewsService {
         }
       }
 
-
       // 3. Update Tags
       if (data.tags && Array.isArray(data.tags)) {
         await tx.delete(newsTags).where(eq(newsTags.newsId, id));
         const tagIds = await TagsService.upsertMany(data.tags);
         if (tagIds.length > 0) {
-          await tx.insert(newsTags).values(tagIds.map(tagId => ({ newsId: id, tagId })));
+          await tx
+            .insert(newsTags)
+            .values(tagIds.map((tagId) => ({ newsId: id, tagId })));
         }
       }
 
@@ -248,7 +349,7 @@ export class AdminNewsService {
           newsId: id,
           type: m.type,
           url: m.url,
-          sortOrder: m.sortOrder || (index + 1),
+          sortOrder: m.sortOrder || index + 1,
         }));
         if (mediaData.length > 0) {
           await tx.insert(newsMedia).values(mediaData);
@@ -262,7 +363,7 @@ export class AdminNewsService {
           newsId: id,
           label: l.label,
           url: l.url,
-          sortOrder: l.sortOrder || (index + 1),
+          sortOrder: l.sortOrder || index + 1,
         }));
         if (linksData.length > 0) {
           await tx.insert(newsLinks).values(linksData);
@@ -273,17 +374,19 @@ export class AdminNewsService {
       if (data.authors && Array.isArray(data.authors)) {
         await tx.delete(newsAuthors).where(eq(newsAuthors.newsId, id));
         if (data.authors.length > 0) {
-          await tx.insert(newsAuthors).values(
-            data.authors.map((userId: string) => ({ newsId: id, userId }))
-          );
+          await tx
+            .insert(newsAuthors)
+            .values(
+              data.authors.map((userId: string) => ({ newsId: id, userId })),
+            );
         }
       }
 
       // Log activity
       await ActivityLogService.log({
         userId: authUser.userId,
-        action: 'news.update',
-        entityType: 'news',
+        action: "news.update",
+        entityType: "news",
         entityId: id,
         metadata: { title: record.title },
         ip,
@@ -296,16 +399,19 @@ export class AdminNewsService {
     return updated;
   }
 
-  static async deleteNews(id: string, authUser: any, ip?: string, userAgent?: string) {
-    const [deleted] = await db.delete(news)
-      .where(eq(news.id, id))
-      .returning();
+  static async deleteNews(
+    id: string,
+    authUser: any,
+    ip?: string,
+    userAgent?: string,
+  ) {
+    const [deleted] = await db.delete(news).where(eq(news.id, id)).returning();
 
     if (deleted) {
       await ActivityLogService.log({
         userId: authUser.userId,
-        action: 'news.delete',
-        entityType: 'news',
+        action: "news.delete",
+        entityType: "news",
         entityId: deleted.id,
         metadata: { title: deleted.title },
         ip,
@@ -317,11 +423,17 @@ export class AdminNewsService {
   }
 
   static async addAuthor(newsId: string, userId: string) {
-    await db.insert(newsAuthors).values({ newsId, userId }).onConflictDoNothing();
+    await db
+      .insert(newsAuthors)
+      .values({ newsId, userId })
+      .onConflictDoNothing();
   }
 
   static async removeAuthor(newsId: string, userId: string) {
-    await db.delete(newsAuthors)
-      .where(and(eq(newsAuthors.newsId, newsId), eq(newsAuthors.userId, userId)));
+    await db
+      .delete(newsAuthors)
+      .where(
+        and(eq(newsAuthors.newsId, newsId), eq(newsAuthors.userId, userId)),
+      );
   }
 }
