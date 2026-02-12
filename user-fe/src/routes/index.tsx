@@ -122,7 +122,7 @@ function App() {
           {/* Main Column - Identical width to Search Bar */}
           <div className="space-y-0 relative">
             {/* Continuous Timeline Line - inside content area, right side */}
-            <div className="hidden xl:block absolute top-8 bottom-0 w-[2px] bg-red-100" style={{ right: '-100px' }} />
+            <div className="hidden md:block absolute top-8 bottom-0 w-[2px] bg-red-100" style={{ right: '-100px' }} />
             
             {isLoading ? (
               <div className="flex flex-col items-center justify-center py-20 gap-4">
@@ -164,8 +164,8 @@ function App() {
                         </div>
 
                         {/* Right Timeline Dots - Sticky within this group */}
-                        <div className="hidden xl:block absolute top-0 h-full" style={{ right: '-105px' }}>
-                          <div className="sticky top-[180px] py-4">
+                        <div className="hidden md:block absolute top-0 h-full" style={{ right: '-105px' }}>
+                          <div className="sticky top-[140px] xl:top-[180px] py-2 xl:py-4">
                             <div className="flex flex-col gap-4">
                               {newsItems.map((_: any, i: number) => (
                                 <div 
