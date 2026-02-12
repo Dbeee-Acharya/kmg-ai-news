@@ -2,7 +2,7 @@ module.exports = {
   apps: [
     {
       name: "fact-checker-user:server",
-      script: "./dist/src/index.js",
+      script: "./dist/index.js",
 
       exec_mode: "cluster",
       instances: "2",
