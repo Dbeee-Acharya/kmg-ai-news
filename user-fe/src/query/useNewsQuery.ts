@@ -8,8 +8,7 @@ export const useNewsQuery = () => {
       queryFn: ({ pageParam = 0 }) => newsApi.getNews(pageParam, platform),
       initialPageParam: 0,
       getNextPageParam: (lastPage, allPages) => {
-        // If the last page had items, we try next page (since pagination is date-block based)
-        return lastPage.length > 0 ? allPages.length : undefined;
+        return lastPage.hasMore ? allPages.length : undefined;
       },
       staleTime: 1000 * 60 * 5, // 5 minutes (matches server cache)
     });

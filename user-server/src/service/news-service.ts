@@ -9,31 +9,24 @@ import {
   newsAuthors,
   tags 
 } from '../db/schema.js';
-import { eq, and, desc, asc, lte, gte, sql, inArray } from 'drizzle-orm';
+import { eq, and, desc, asc, gte, sql, inArray } from 'drizzle-orm';
 import { cacheService } from './cache-service.js';
 
 const CACHE_TTL = 120; // 2 minutes
 
 export class NewsService {
   /**
-   * Get paginated news in blocks of 5 days
+   * Get paginated news with offset/limit
    */
-  static async getPaginatedNews(page: number = 0, platform?: string) {
+  static async getPaginatedNews(page: number = 0, platform?: string, pageSize: number = 15) {
     const cacheKey = cacheService.generateKey('news_list', { page, platform: platform || 'all' });
     const cached = await cacheService.get(cacheKey);
     if (cached) return cached;
 
-    const now = new Date();
-    const endDate = new Date(now);
-    endDate.setDate(now.getDate() - (page * 5));
-    
-    const startDate = new Date(now);
-    startDate.setDate(now.getDate() - ((page + 1) * 5));
+    const offset = page * pageSize;
 
     const filters = [
       eq(news.isPublished, true),
-      lte(news.createdAt, endDate),
-      gte(news.createdAt, startDate)
     ];
 
     if (platform) {
@@ -58,12 +51,18 @@ export class NewsService {
 
     const newsItems = await (query as any)
       .where(and(...filters))
-      .orderBy(desc(news.createdAt));
+      .orderBy(desc(news.createdAt))
+      .limit(pageSize + 1)
+      .offset(offset);
+
+    const hasMore = newsItems.length > pageSize;
+    if (hasMore) newsItems.pop();
 
     const results = await this.attachRelations(newsItems);
 
-    await cacheService.set(cacheKey, results, CACHE_TTL);
-    return results;
+    const response = { items: results, hasMore };
+    await cacheService.set(cacheKey, response, CACHE_TTL);
+    return response;
   }
 
   /**

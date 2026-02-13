@@ -5,7 +5,7 @@ export const newsApi = {
     const { data } = await api.get("/api/news", {
       params: { page, platform },
     });
-    return data;
+    return data as { items: any[]; hasMore: boolean };
   },
 
   searchNews: async (query: string) => {

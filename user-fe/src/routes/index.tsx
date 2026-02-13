@@ -66,7 +66,7 @@ function App() {
 
   const allNews = useMemo(() => {
     if (isSearching) return searchQueryResult.data || [];
-    return data?.pages.flat() || [];
+    return data?.pages.flatMap((p: any) => p.items) || [];
   }, [isSearching, searchQueryResult.data, data?.pages]);
 
   return (
