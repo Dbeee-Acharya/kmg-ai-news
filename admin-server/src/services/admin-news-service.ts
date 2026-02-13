@@ -198,6 +198,7 @@ export class AdminNewsService {
           ogImage: sanitizeOgImageForCreate(data.ogImage),
           reporterId:
             authUser.userId === "super-admin-uuid" ? null : authUser.userId,
+          createdAt: data.createdAt ? new Date(data.createdAt) : undefined,
         })
         .returning();
 
@@ -312,6 +313,7 @@ export class AdminNewsService {
             : null,
           eventDateNp: data.eventDateNp,
           ogImage: sanitizeOgImageForUpdate(data.ogImage),
+          createdAt: data.createdAt ? new Date(data.createdAt) : undefined,
           updatedAt: new Date(),
         })
         .where(eq(news.id, id))

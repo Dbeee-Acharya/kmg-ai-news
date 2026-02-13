@@ -68,6 +68,7 @@ function NewsDetailComponent() {
     media: [],
     links: [],
     ogImage: '',
+    createdAt: '',
   })
 
   const [newKeyword, setNewKeyword] = useState('')
@@ -88,6 +89,7 @@ function NewsDetailComponent() {
         media: newsData.media || [],
         links: newsData.links || [],
         ogImage: newsData.ogImage || '',
+        createdAt: newsData.createdAt ? new Date(newsData.createdAt).toISOString().slice(0, 16) : '',
       })
       // Disable auto-slug on existing news to prevent accidental breaks
       setIsAutoSlug(false)
@@ -579,6 +581,27 @@ function NewsDetailComponent() {
                   <p className="text-sm text-muted-foreground">
                     Draft news will not be visible on the public website.
                   </p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Publication Date</CardTitle>
+                  <CardDescription>Adjust the created at date of this article.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid gap-2">
+                    <Label htmlFor="createdAt">Created At</Label>
+                    <Input 
+                      type="datetime-local" 
+                      id="createdAt" 
+                      value={formData.createdAt} 
+                      onChange={(e) => setFormData({...formData, createdAt: e.target.value})} 
+                    />
+                    <p className="text-[10px] text-muted-foreground">
+                      This date is used for sorting news on the public website.
+                    </p>
+                  </div>
                 </CardContent>
               </Card>
 
