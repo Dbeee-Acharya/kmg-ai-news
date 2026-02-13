@@ -287,4 +287,14 @@ code {
     height: 0;
     display: none;
   }
+
+  .prose a {
+    color: #2563eb !important;
+    text-decoration: underline !important;
+    font-weight: 600;
+  }
+
+  .prose a:hover {
+    color: #1d4ed8 !important;
+  }
 }
