@@ -32,8 +32,8 @@ export class NewsService {
 
     const filters = [
       eq(news.isPublished, true),
-      lte(news.publishedAt, endDate),
-      gte(news.publishedAt, startDate)
+      lte(news.createdAt, endDate),
+      gte(news.createdAt, startDate)
     ];
 
     if (platform) {
@@ -46,7 +46,7 @@ export class NewsService {
       slug: news.slug,
       content: news.content,
       metadata: news.metadata,
-      publishedAt: news.publishedAt,
+      publishedAt: news.createdAt,
       eventDateEn: news.eventDateEn,
       eventDateNp: news.eventDateNp,
     })
@@ -58,7 +58,7 @@ export class NewsService {
 
     const newsItems = await (query as any)
       .where(and(...filters))
-      .orderBy(desc(news.publishedAt));
+      .orderBy(desc(news.createdAt));
 
     const results = await this.attachRelations(newsItems);
 
@@ -102,7 +102,7 @@ export class NewsService {
         )`
       )
     )
-    .orderBy(desc(news.publishedAt))
+    .orderBy(desc(news.createdAt))
     .limit(20);
 
     const results = await this.attachRelations(newsItems);
@@ -187,7 +187,7 @@ export class NewsService {
       slug: news.slug,
       keywords: news.keywords,
       metadata: news.metadata,
-      publishedAt: news.publishedAt,
+      publishedAt: news.createdAt,
       eventDateEn: news.eventDateEn,
       eventDateNp: news.eventDateNp,
       ogImage: news.ogImage,
@@ -270,9 +270,9 @@ export class NewsService {
     .where(
       and(
         eq(news.isPublished, true),
-        gte(news.publishedAt, lastWeek)
+        gte(news.createdAt, lastWeek)
       )
     )
-    .orderBy(desc(news.publishedAt));
+    .orderBy(desc(news.createdAt));
   }
 }
