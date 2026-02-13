@@ -82,7 +82,7 @@ export class NewsService {
       slug: news.slug,
       content: news.content,
       metadata: news.metadata,
-      publishedAt: news.publishedAt,
+      publishedAt: news.createdAt,
       eventDateEn: news.eventDateEn,
       eventDateNp: news.eventDateNp,
     })
