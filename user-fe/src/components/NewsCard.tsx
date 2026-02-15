@@ -164,7 +164,7 @@ const NewsCard: React.FC<NewsCardProps> = ({ news, className }) => {
             <Link to="/n/$newsSlug" params={{ newsSlug: news.slug }} className="block text-black leading-relaxed text-sm md:text-base font-normal text-left hover:text-zinc-600 transition-colors">
               <div 
                 dangerouslySetInnerHTML={{ __html: news.content }} 
-                className="prose prose-zinc max-w-none text-black font-sans line-clamp-[12] text-[16px]"
+                className="prose prose-zinc max-w-none text-black font-sans line-clamp-[12] text-[16px] [&_a]:text-inherit [&_a]:no-underline [&_a]:pointer-events-none [&_a]:font-inherit"
               />
             </Link>
 
