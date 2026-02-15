@@ -176,7 +176,7 @@ function NewsDetailPage() {
         <div className="py-6 border-b border-zinc-300">
           <div 
             dangerouslySetInnerHTML={{ __html: news.content }} 
-            className="prose prose-zinc prose-lg max-w-none text-black selection:bg-blue-100"
+            className="prose prose-zinc prose-lg max-w-none text-black selection:bg-blue-100 prose-links-enabled"
             style={{ 
               fontSize: '20px', 
               fontWeight: 500, 
