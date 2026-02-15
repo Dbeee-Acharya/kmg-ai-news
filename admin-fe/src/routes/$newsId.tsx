@@ -89,7 +89,11 @@ function NewsDetailComponent() {
         media: newsData.media || [],
         links: newsData.links || [],
         ogImage: newsData.ogImage || '',
-        createdAt: newsData.createdAt ? new Date(newsData.createdAt).toISOString().slice(0, 16) : '',
+        createdAt: newsData.createdAt ? (() => {
+          const d = new Date(newsData.createdAt);
+          const pad = (n: number) => n.toString().padStart(2, '0');
+          return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+        })() : '',
       })
       // Disable auto-slug on existing news to prevent accidental breaks
       setIsAutoSlug(false)
